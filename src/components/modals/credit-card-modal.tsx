@@ -12,9 +12,12 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import CurrencyInput from "react-currency-input-field";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 export function CreditCardModal({ accounts, initialData, trigger }: { accounts: any[]; initialData?: any; trigger?: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
     const { register, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: initialData ? {
@@ -23,10 +26,10 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
             closingDay: initialData.closingDay,
             dueDay: initialData.dueDay,
             color: initialData.color || "#8b5cf6",
-            accountId: initialData.accountId || "none",
+            accountId: initialData.accountId || "",
         } : {
             color: "#8b5cf6",
-            accountId: "none",
+            accountId: "",
             limit: "",
         }
     });
@@ -34,6 +37,12 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
     const onSubmit = async (data: any) => {
         setLoading(true);
         try {
+            if (!data.accountId) {
+                toast.error("Por favor, selecione uma conta vinculada ao cartão.");
+                setLoading(false);
+                return;
+            }
+
             const rawLimit = String(data.limit || "0");
             const numericLimit = parseFloat(rawLimit.replace(/\./g, '').replace(',', '.'));
 
@@ -43,7 +52,7 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                 closingDay: parseInt(data.closingDay),
                 dueDay: parseInt(data.dueDay),
                 color: data.color || "#8b5cf6",
-                accountId: data.accountId === "none" ? null : data.accountId
+                accountId: data.accountId
             };
 
             if (initialData) {
@@ -54,6 +63,7 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                 toast.success("Cartão criado com sucesso!");
                 reset();
             }
+            queryClient.invalidateQueries();
             setOpen(false);
         } catch (error: any) {
             toast.error(error?.message || "Erro ao salvar cartão.");
@@ -116,12 +126,11 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                     </div>
                     <div className="space-y-2">
                         <Label>Conta para Pagamento da Fatura</Label>
-                        <Select value={watch("accountId")} onValueChange={(val) => setValue("accountId", val)}>
+                        <Select value={watch("accountId")} onValueChange={(val) => setValue("accountId", val)} required>
                             <SelectTrigger className="bg-zinc-900 border-zinc-800">
-                                <SelectValue placeholder="Selecione uma conta (Opcional)" />
+                                <SelectValue placeholder="Selecione a conta corrente" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
-                                <SelectItem value="none">Nenhuma</SelectItem>
                                 {accounts.map(acc => (
                                     <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
                                 ))}

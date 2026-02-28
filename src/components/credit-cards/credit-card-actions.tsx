@@ -8,16 +8,19 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MoreHorizontal, Edit, Trash } from "lucide-react";
 import { CreditCardModal } from "@/components/modals/credit-card-modal";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CreditCardActions({ creditCard, accounts }: { creditCard: any; accounts: any[] }) {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
             await deleteCreditCard(creditCard.id);
+            queryClient.invalidateQueries();
             setDeleteOpen(false);
         } catch (error: any) {
             toast.error(error.message || "Erro ao excluir o cartão.");

@@ -45,6 +45,10 @@ export async function deleteCategory(id: string) {
     const existing = await prisma.category.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.user.id) throw new Error("Não encontrado");
 
+    if (id === `system-invoice-${session.user.id}`) {
+        throw new Error("A categoria de Pagamento de Fatura do cartão é nativa do sistema e não pode ser excluída.");
+    }
+
     try {
         await prisma.category.delete({
             where: { id },
@@ -66,6 +70,14 @@ export async function updateCategory(id: string, data: { name: string; type: "IN
 
     const existing = await prisma.category.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.user.id) throw new Error("Não encontrado");
+
+    // Block logic and properties override for system category
+    if (id === `system-invoice-${session.user.id}`) {
+        data.type = "EXPENSE"; // Força ser despesa
+        data.color = existing.color || "#ef4444"; // Bloqueia mudança de cor com fallback
+        data.isRequired = existing.isRequired;
+        data.isFixed = existing.isFixed;
+    }
 
     const category = await prisma.category.update({
         where: { id },

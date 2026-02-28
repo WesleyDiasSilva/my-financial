@@ -5,9 +5,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-export async function createCreditCard(data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId?: string | null }) {
+export async function createCreditCard(data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId: string }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
+
+    if (!data.accountId) throw new Error("Um cartão de crédito precisa estar vinculado a uma conta corrente");
 
     const card = await prisma.creditCard.create({
         data: {
@@ -74,9 +76,11 @@ export async function deleteCreditCard(id: string) {
     revalidatePath("/transactions");
 }
 
-export async function updateCreditCard(id: string, data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId?: string | null }) {
+export async function updateCreditCard(id: string, data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId: string }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
+
+    if (!data.accountId) throw new Error("Um cartão de crédito precisa estar vinculado a uma conta corrente");
 
     const existing = await prisma.creditCard.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.user.id) throw new Error("Não encontrado");

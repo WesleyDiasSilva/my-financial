@@ -4,6 +4,7 @@ import { getMonthlyIncome } from "@/actions/user";
 import { CategoryModal } from "@/components/modals/category-modal";
 import { PlanningSummary } from "@/components/planning/planning-summary";
 import { PlanningList } from "@/components/planning/planning-list";
+import { SeedButton } from "@/components/planning/seed-button";
 
 export default async function PlanningPage({
     searchParams: searchParamsPromise,
@@ -43,7 +44,10 @@ export default async function PlanningPage({
                     <h2 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">Planejamento</h2>
                     <p className="text-zinc-500 mt-1 text-lg font-medium">Defina suas metas e controle sua saúde financeira</p>
                 </div>
-                <CategoryModal />
+                <div className="flex items-center gap-3">
+                    <SeedButton />
+                    <CategoryModal />
+                </div>
             </div>
 
             {/* Summary Section */}

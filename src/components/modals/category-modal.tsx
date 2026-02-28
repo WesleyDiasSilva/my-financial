@@ -90,70 +90,72 @@ export function CategoryModal({ initialData, trigger }: { initialData?: any; tri
                         <Input id="name" placeholder="Ex: Alimentação" required className="bg-zinc-900 border-zinc-800" {...register("name")} />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Tipo</Label>
-                        <Select value={watch("type")} onValueChange={(val) => setValue("type", val)} required>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-800">
-                                <SelectValue placeholder="Selecione o tipo" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
-                                <SelectItem value="EXPENSE">💸 Despesa</SelectItem>
-                                <SelectItem value="INCOME">💰 Receita</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {watch("type") === "EXPENSE" && (
+                    {!(initialData?.id?.startsWith("system-invoice-")) && (
                         <>
                             <div className="space-y-2">
-                                <Label htmlFor="monthlyLimit">Meta de Gasto Mensal (R$)</Label>
-                                <CurrencyInput
-                                    id="monthlyLimit"
-                                    placeholder="0,00 (opcional)"
-                                    decimalsLimit={2}
-                                    decimalSeparator=","
-                                    groupSeparator="."
-                                    prefix="R$ "
-                                    className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-700"
-                                    value={watch("monthlyLimit")}
-                                    onValueChange={(value) => setValue("monthlyLimit", value || "")}
-                                />
+                                <Label>Tipo</Label>
+                                <Select value={watch("type")} onValueChange={(val) => setValue("type", val)} required>
+                                    <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                        <SelectValue placeholder="Selecione o tipo" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                        <SelectItem value="EXPENSE">💸 Despesa</SelectItem>
+                                        <SelectItem value="INCOME">💰 Receita</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="color">Cor da Categoria</Label>
+                                <Input id="color" type="color" className="bg-zinc-900 border-zinc-800 h-10 px-2 py-1 w-full" {...register("color")} />
+                            </div>
+
+                            <div className="border border-zinc-800 rounded-lg p-4 space-y-4 bg-zinc-900/30">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Classificação</p>
+                                {watch("type") === "EXPENSE" && (
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <Label htmlFor="isRequired" className="text-sm font-medium cursor-pointer">Obrigatório</Label>
+                                            <p className="text-[11px] text-muted-foreground">Gasto essencial, não pode ser cortado</p>
+                                        </div>
+                                        <Switch
+                                            id="isRequired"
+                                            checked={!!watch("isRequired")}
+                                            onCheckedChange={(val) => setValue("isRequired", val)}
+                                        />
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <Label htmlFor="isFixed" className="text-sm font-medium cursor-pointer">Fixo</Label>
+                                        <p className="text-[11px] text-muted-foreground">Valor não varia mês a mês</p>
+                                    </div>
+                                    <Switch
+                                        id="isFixed"
+                                        checked={!!watch("isFixed")}
+                                        onCheckedChange={(val) => setValue("isFixed", val)}
+                                    />
+                                </div>
                             </div>
                         </>
                     )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="color">Cor da Categoria</Label>
-                        <Input id="color" type="color" className="bg-zinc-900 border-zinc-800 h-10 px-2 py-1 w-full" {...register("color")} />
-                    </div>
-
-                    <div className="border border-zinc-800 rounded-lg p-4 space-y-4 bg-zinc-900/30">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Classificação</p>
-                        {watch("type") === "EXPENSE" && (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="isRequired" className="text-sm font-medium cursor-pointer">Obrigatório</Label>
-                                    <p className="text-[11px] text-muted-foreground">Gasto essencial, não pode ser cortado</p>
-                                </div>
-                                <Switch
-                                    id="isRequired"
-                                    checked={!!watch("isRequired")}
-                                    onCheckedChange={(val) => setValue("isRequired", val)}
-                                />
-                            </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <Label htmlFor="isFixed" className="text-sm font-medium cursor-pointer">Fixo</Label>
-                                <p className="text-[11px] text-muted-foreground">Valor não varia mês a mês</p>
-                            </div>
-                            <Switch
-                                id="isFixed"
-                                checked={!!watch("isFixed")}
-                                onCheckedChange={(val) => setValue("isFixed", val)}
+                    {watch("type") === "EXPENSE" && (
+                        <div className="space-y-2">
+                            <Label htmlFor="monthlyLimit">Meta de Gasto Mensal (R$)</Label>
+                            <CurrencyInput
+                                id="monthlyLimit"
+                                placeholder="0,00 (opcional)"
+                                decimalsLimit={2}
+                                decimalSeparator=","
+                                groupSeparator="."
+                                prefix="R$ "
+                                className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-700"
+                                value={watch("monthlyLimit")}
+                                onValueChange={(value) => setValue("monthlyLimit", value || "")}
                             />
                         </div>
-                    </div>
+                    )}
 
                     <DialogFooter className="pt-2">
                         <Button type="button" variant="outline" className="border-zinc-800" onClick={() => setOpen(false)}>

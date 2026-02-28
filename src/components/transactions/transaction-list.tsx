@@ -17,6 +17,7 @@ export function TransactionList({ transactions, categories, creditCards, account
     const [searchTerm, setSearchTerm] = useState("");
     const [typeFilter, setTypeFilter] = useState("all");
     const [monthFilter, setMonthFilter] = useState("all");
+    const [accountFilter, setAccountFilter] = useState("all");
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [txToDelete, setTxToDelete] = useState<any>(null);
@@ -106,7 +107,20 @@ export function TransactionList({ transactions, categories, creditCards, account
             const txMonthKey = `${txYear}-${txMonth.toString().padStart(2, '0')}`;
             const matchMonth = monthFilter === "all" || monthFilter === txMonthKey;
 
-            return matchSearch && matchType && matchMonth;
+            // Account Filter (Direct Account OR via Linked Credit Card)
+            let matchAcct = true;
+            if (accountFilter !== "all") {
+                if (tx.accountId) {
+                    matchAcct = tx.accountId === accountFilter;
+                } else if (tx.creditCardId) {
+                    const cardForTx = creditCards.find(c => c.id === tx.creditCardId);
+                    matchAcct = cardForTx?.accountId === accountFilter;
+                } else {
+                    matchAcct = false; // No account and no card, therefore doesn't belong to the selected account
+                }
+            }
+
+            return matchSearch && matchType && matchMonth && matchAcct;
         });
 
         if (sortConfig !== null) {
@@ -123,7 +137,7 @@ export function TransactionList({ transactions, categories, creditCards, account
             });
         }
         return currentTransactions;
-    }, [transactions, searchTerm, typeFilter, monthFilter, sortConfig]);
+    }, [transactions, searchTerm, typeFilter, monthFilter, accountFilter, sortConfig, creditCards]);
 
     const availableMonths = useMemo(() => {
         const unique = new Set<string>();
@@ -142,8 +156,8 @@ export function TransactionList({ transactions, categories, creditCards, account
 
     return (
         <div className="flex flex-col w-full h-full">
-            <div className="flex items-center gap-4 mt-6">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-wrap items-center gap-4 mt-6">
+                <div className="relative flex-[1_1_300px] min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
@@ -153,8 +167,19 @@ export function TransactionList({ transactions, categories, creditCards, account
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <Select value={accountFilter} onValueChange={setAccountFilter}>
+                    <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800 flex-shrink-0">
+                        <SelectValue placeholder="Conta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas as Contas</SelectItem>
+                        {accounts.map(acc => (
+                            <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800">
+                    <SelectTrigger className="w-[150px] bg-zinc-900 border-zinc-800 flex-shrink-0">
                         <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -164,7 +189,7 @@ export function TransactionList({ transactions, categories, creditCards, account
                     </SelectContent>
                 </Select>
                 <Select value={monthFilter} onValueChange={setMonthFilter}>
-                    <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800">
+                    <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800 flex-shrink-0">
                         <SelectValue placeholder="Mês" />
                     </SelectTrigger>
                     <SelectContent>
@@ -178,7 +203,7 @@ export function TransactionList({ transactions, categories, creditCards, account
                     <Button
                         variant="destructive"
                         size="sm"
-                        className="animate-in fade-in slide-in-from-left-2 duration-300 font-bold text-[10px] tracking-widest px-4 h-9 uppercase"
+                        className="animate-in fade-in slide-in-from-left-2 duration-300 font-bold text-[10px] tracking-widest px-4 h-9 flex-shrink-0 uppercase"
                         onClick={() => setBulkDeleteOpen(true)}
                     >
                         <Trash className="h-3 w-3 mr-2" /> Excluir ({selectedIds.length})

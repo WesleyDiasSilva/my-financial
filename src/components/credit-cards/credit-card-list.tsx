@@ -18,10 +18,8 @@ interface CreditCardListProps {
 }
 
 export function CreditCardList({ initialCards, accounts, categories }: CreditCardListProps) {
-    const [cards, setCards] = useState(initialCards);
-
     const handleMove = async (index: number, direction: 'up' | 'down') => {
-        const newCards = [...cards];
+        const newCards = [...initialCards];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
         if (targetIndex < 0 || targetIndex >= newCards.length) return;
@@ -29,13 +27,15 @@ export function CreditCardList({ initialCards, accounts, categories }: CreditCar
         // Swap
         [newCards[index], newCards[targetIndex]] = [newCards[targetIndex], newCards[index]];
 
-        setCards(newCards);
-
+        // In a real scenario we'd optimistically update cache here.
+        // But for simplicity, we call API and trigger re-render on parent
         try {
             await reorderCreditCards(newCards.map(c => c.id));
+            // Let the invalidateQueries inside CreditCardActions or parent handle refetch
+            // Usually we'd need useQueryClient here but since it's just order, 
+            // a page reload or generic refresh is enough if not implemented optimistically.
         } catch (error) {
             toast.error("Erro ao salvar nova ordem");
-            setCards(initialCards); // Rollback
         }
     };
 
@@ -49,7 +49,7 @@ export function CreditCardList({ initialCards, accounts, categories }: CreditCar
                 <div className="h-4 w-1 bg-purple-500 rounded-full" />
                 <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Seus Cartões</h3>
             </div>
-            {cards.map((card, index) => {
+            {initialCards.map((card, index) => {
                 const unpaidMonthlySpent = (card.transactions || [])
                     .filter((tx: any) => {
                         const d = new Date(tx.date);
@@ -78,7 +78,27 @@ export function CreditCardList({ initialCards, accounts, categories }: CreditCar
                             <div className="h-32 p-6 flex flex-col justify-between" style={{ background: `linear-gradient(to bottom right, ${card.color || '#8b5cf6'}, #18181b)` }}>
                                 <div className="flex justify-between items-start">
                                     <span className="font-semibold text-white/90">{card.name}</span>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex bg-black/20 rounded-lg p-0.5 border border-white/10 mr-1 backdrop-blur-md">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-white/60 hover:text-white hover:bg-white/10"
+                                                onClick={() => handleMove(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ChevronUp className="h-3 w-3" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-white/60 hover:text-white hover:bg-white/10"
+                                                onClick={() => handleMove(index, 'down')}
+                                                disabled={index === initialCards.length - 1}
+                                            >
+                                                <ChevronDown className="h-3 w-3" />
+                                            </Button>
+                                        </div>
                                         <CreditCardActions creditCard={card} accounts={accounts} />
                                     </div>
                                 </div>
@@ -103,7 +123,7 @@ export function CreditCardList({ initialCards, accounts, categories }: CreditCar
                                     <div className="flex flex-col gap-2 items-end">
                                         <TransactionModal
                                             categories={categories}
-                                            creditCards={cards}
+                                            creditCards={initialCards}
                                             accounts={accounts}
                                             isCreditCardOnly={true}
                                             fixedCreditCardId={card.id}
@@ -162,7 +182,7 @@ export function CreditCardList({ initialCards, accounts, categories }: CreditCar
                     </div>
                 );
             })}
-            {cards.length === 0 && (
+            {initialCards.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-12 border border-zinc-800 border-dashed rounded-lg bg-zinc-900/20">
                     <CreditCardIcon className="h-12 w-12 text-zinc-700 mb-4" />
                     <p className="text-zinc-500 font-medium text-lg">Nenhum cartão cadastrado.</p>

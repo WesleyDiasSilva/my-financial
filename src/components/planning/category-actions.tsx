@@ -43,9 +43,11 @@ export function CategoryActions({ category }: { category: any }) {
                             </DropdownMenuItem>
                         }
                     />
-                    <DropdownMenuItem className="text-red-500 hover:text-red-400 focus:text-red-400 cursor-pointer" onSelect={(e) => { e.preventDefault(); setDeleteOpen(true); }}>
-                        <Trash className="mr-2 h-4 w-4" /> Excluir
-                    </DropdownMenuItem>
+                    {!category.id.startsWith("system-invoice-") && (
+                        <DropdownMenuItem className="text-red-500 hover:text-red-400 focus:text-red-400 cursor-pointer" onSelect={(e) => { e.preventDefault(); setDeleteOpen(true); }}>
+                            <Trash className="mr-2 h-4 w-4" /> Excluir
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 

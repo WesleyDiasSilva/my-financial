@@ -18,11 +18,13 @@ export async function createTransaction(data: {
     recurrenceType?: "WEEKLY" | "MONTHLY" | "YEARLY" | null;
     recurrencePeriod?: number | null;
     installments?: number;
+    isReimbursable?: boolean;
+    reimbursementDate?: Date | null;
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
 
-    const { installments = 1, ...txData } = data;
+    const { installments = 1, isReimbursable, reimbursementDate, ...txData } = data;
 
     if (txData.creditCardId) {
         const card = await prisma.creditCard.findUnique({
@@ -65,13 +67,59 @@ export async function createTransaction(data: {
             data: transactions
         });
     } else {
-        await prisma.transaction.create({
+        // Normal Creation Logic + Reimbursement Check
+        const mainTransaction = await prisma.transaction.create({
             data: {
                 ...txData,
                 isPaid: txData.isPaid ?? true,
                 userId: session.user.id,
-            },
+            }
         });
+
+        if (isReimbursable && reimbursementDate) {
+            // Find or configure "Reembolsos" automatic category
+            let refundCategory = await prisma.category.findFirst({
+                where: { userId: session.user.id, name: "Reembolsos", type: "INCOME" }
+            });
+
+            if (!refundCategory) {
+                refundCategory = await prisma.category.create({
+                    data: {
+                        id: `system-refund-${Date.now()}`,
+                        name: "Reembolsos",
+                        type: "INCOME",
+                        color: "#eab308", // Yellow color
+                        userId: session.user.id
+                    }
+                });
+            }
+
+            // Create pending income side on the Bank Account (even if expense originated in Credit Card)
+            // If the user selected a credit card but no specific account, we fallback to the card's linked account
+            let targetAccountId = txData.accountId;
+
+            if (!targetAccountId && txData.creditCardId) {
+                const cardRef = await prisma.creditCard.findUnique({
+                    where: { id: txData.creditCardId },
+                    select: { accountId: true }
+                });
+                targetAccountId = cardRef?.accountId || null;
+            }
+
+            await prisma.transaction.create({
+                data: {
+                    description: `Reembolso: ${txData.description}`,
+                    amount: txData.amount,
+                    type: "INCOME",
+                    date: new Date(reimbursementDate),
+                    categoryId: refundCategory.id,
+                    accountId: targetAccountId,
+                    creditCardId: null, // Refunds enter directly into the bank balance, not as CC limit
+                    isPaid: false, // Refunds are always born as pending
+                    userId: session.user.id,
+                }
+            });
+        }
     }
 
     revalidatePath("/transactions");
@@ -154,16 +202,21 @@ export async function updateTransaction(id: string, data: {
     isRecurring?: boolean;
     recurrenceType?: "WEEKLY" | "MONTHLY" | "YEARLY" | null;
     recurrencePeriod?: number | null;
+    installments?: number;
+    isReimbursable?: boolean;
+    reimbursementDate?: Date | null;
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
 
+    const { installments, isReimbursable, reimbursementDate, ...txData } = data;
+
     const existing = await prisma.transaction.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.user.id) throw new Error("Não encontrado");
 
-    if (data.creditCardId) {
+    if (txData.creditCardId) {
         const card = await prisma.creditCard.findUnique({
-            where: { id: data.creditCardId },
+            where: { id: txData.creditCardId },
             include: { transactions: true }
         });
 
@@ -175,16 +228,21 @@ export async function updateTransaction(id: string, data: {
 
         const availableLimit = Number(card.limit) - unpaidDebt;
 
-        if (data.amount > availableLimit) {
+        if (txData.amount > availableLimit) {
             throw new Error(`Limite insuficiente. Disponível: ${availableLimit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
         }
     }
 
+    const { categoryId, accountId, creditCardId, ...safeData } = txData;
+
     const transaction = await prisma.transaction.update({
         where: { id },
         data: {
-            ...data,
-            isPaid: data.isPaid ?? true,
+            ...safeData,
+            isPaid: txData.isPaid ?? true,
+            category: { connect: { id: categoryId } },
+            account: accountId ? { connect: { id: accountId } } : { disconnect: true },
+            creditCard: creditCardId ? { connect: { id: creditCardId } } : { disconnect: true },
         },
     });
 

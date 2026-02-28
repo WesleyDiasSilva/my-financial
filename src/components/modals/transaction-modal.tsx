@@ -13,6 +13,7 @@ import { Plus, Wallet, CreditCard as CardIcon, Calendar, Info, Repeat, CheckCirc
 import CurrencyInput from 'react-currency-input-field';
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function TransactionModal({
     categories,
@@ -32,6 +33,7 @@ export function TransactionModal({
     fixedCreditCardId?: string
 }) {
     const [open, setOpen] = useState(false);
+    const queryClient = useQueryClient();
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData ? {
             type: initialData.type,
@@ -47,6 +49,8 @@ export function TransactionModal({
             recurrenceType: initialData.recurrenceType || 'MONTHLY',
             recurrencePeriod: initialData.recurrencePeriod || 1,
             installments: 1,
+            isReimbursable: initialData.isReimbursable ?? false,
+            reimbursementDate: initialData.reimbursementDate ? new Date(initialData.reimbursementDate).toISOString().split('T')[0] : '',
         } : {
             type: 'EXPENSE',
             paymentMethod: isCreditCardOnly ? 'CREDIT_CARD' : 'CASH',
@@ -60,6 +64,8 @@ export function TransactionModal({
             recurrenceType: 'MONTHLY',
             recurrencePeriod: 1,
             installments: 1,
+            isReimbursable: false,
+            reimbursementDate: ''
         }
     });
     useEffect(() => {
@@ -109,7 +115,7 @@ export function TransactionModal({
     };
 
     // List filtering
-    const filteredCategories = categories.filter(cat => cat.type === type);
+    const filteredCategories = categories.filter(cat => cat.type === type && !cat.id.startsWith("system-invoice-"));
 
     useEffect(() => {
         // Only clear if not initialData (initial data might have category set correctly)
@@ -119,6 +125,9 @@ export function TransactionModal({
             setValue("categoryId", "");
         }
     }, [type, filteredCategories, setValue, watch]);
+
+    const isReimbursable = watch("isReimbursable");
+    const reimbursementDate = watch("reimbursementDate");
 
     const onSubmit = async (data: any) => {
         setLoading(true);
@@ -134,11 +143,15 @@ export function TransactionModal({
                 categoryId: data.categoryId,
                 accountId: data.paymentMethod === 'CASH' ? data.accountId : null,
                 creditCardId: data.paymentMethod === 'CREDIT_CARD' ? data.creditCardId : null,
-                isPaid: data.isPaid,
+                isPaid: data.paymentMethod === 'CREDIT_CARD' ? false : data.isPaid,
                 isRecurring: data.isRecurring,
                 recurrenceType: data.isRecurring ? data.recurrenceType : null,
                 recurrencePeriod: data.isRecurring ? Number(data.recurrencePeriod) : null,
                 installments: Number(data.installments),
+
+                // Extra fields mapped for Actions
+                isReimbursable: data.isReimbursable ?? false,
+                reimbursementDate: data.isReimbursable && data.reimbursementDate ? new Date(data.reimbursementDate + 'T12:00:00') : null,
             };
 
             if (initialData) {
@@ -149,6 +162,7 @@ export function TransactionModal({
                 toast.success("Lançamento realizado com sucesso!");
                 reset();
             }
+            queryClient.invalidateQueries();
             setOpen(false);
         } catch (error: any) {
             console.error(error);
@@ -167,7 +181,7 @@ export function TransactionModal({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 p-0 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <DialogContent className="sm:max-w-[550px] bg-zinc-950 border-zinc-800 p-0 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Visual Accent Bar */}
                 <div className={cn(
                     "h-1.5 w-full shrink-0 transition-colors duration-500",
@@ -355,8 +369,11 @@ export function TransactionModal({
                             </div>
                         </div>
 
-                        {/* Features: Paid and Recurring */}
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                        {/* Features: Paid and Recurring and Reimbursable*/}
+                        <div className={cn(
+                            "grid gap-3 pt-2",
+                            type === 'EXPENSE' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
+                        )}>
                             {/* Paid Switch - Hidden if isCreditCardOnly */}
                             {!isCreditCardOnly ? (
                                 <div className={cn(
@@ -365,17 +382,17 @@ export function TransactionModal({
                                 )}>
                                     <div className="flex flex-col">
                                         <Label className="text-[11px] font-black uppercase text-zinc-400 group-hover:text-zinc-200 transition-colors">Efetivada?</Label>
-                                        <p className="text-[10px] text-zinc-600">{isPaid ? 'Confirmada' : 'Pendente'}</p>
+                                        <p className="text-[10px] text-zinc-600 truncate mr-2">{isPaid ? 'Confirmada' : 'Pendente'}</p>
                                     </div>
-                                    <Switch checked={watch("isPaid")} onCheckedChange={(val) => setValue("isPaid", val)} />
+                                    <Switch checked={watch("isPaid")} onCheckedChange={(val) => setValue("isPaid", val)} className="shrink-0" />
                                 </div>
                             ) : (
                                 <div className="bg-emerald-500/5 border border-emerald-500/10 p-3.5 rounded-2xl flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <Label className="text-[11px] font-black uppercase text-emerald-500 transition-colors">Status</Label>
-                                        <p className="text-[10px] text-zinc-500">Lançado na Fatura</p>
+                                        <p className="text-[10px] text-zinc-500 truncate mr-2">Lançado na Fatura</p>
                                     </div>
-                                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                    <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
                                 </div>
                             )}
 
@@ -385,11 +402,52 @@ export function TransactionModal({
                             )}>
                                 <div className="flex flex-col">
                                     <Label className="text-[11px] font-black uppercase text-zinc-400 group-hover:text-zinc-200 transition-colors">Repetir?</Label>
-                                    <p className="text-[10px] text-zinc-600">{isRecurring ? 'Recorrência ON' : 'Uma única vez'}</p>
+                                    <p className="text-[10px] text-zinc-600 truncate mr-2">{isRecurring ? 'Recorrência ON' : 'Uma vez'}</p>
                                 </div>
-                                <Switch checked={watch("isRecurring")} onCheckedChange={(val) => setValue("isRecurring", val)} />
+                                <Switch checked={watch("isRecurring")} onCheckedChange={(val) => setValue("isRecurring", val)} className="shrink-0" />
                             </div>
+
+                            {/* Reimbursable Switch (Only for Expenses) */}
+                            {type === 'EXPENSE' && !initialData && (
+                                <div className={cn(
+                                    "sm:col-span-2 md:col-span-1 group flex items-center justify-between p-3.5 rounded-2xl border transition-all",
+                                    isReimbursable ? "bg-yellow-500/5 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.05)]" : "bg-zinc-950/50 border-zinc-800"
+                                )}>
+                                    <div className="flex flex-col">
+                                        <Label className="text-[11px] font-black uppercase text-zinc-400 group-hover:text-zinc-200 transition-colors">Reembolso?</Label>
+                                        <p className="text-[10px] text-zinc-600 truncate mr-2">{isReimbursable ? 'Receber dnv' : 'Não'}</p>
+                                    </div>
+                                    <Switch checked={watch("isReimbursable")} onCheckedChange={(val) => setValue("isReimbursable", val)} className="shrink-0" />
+                                </div>
+                            )}
                         </div>
+
+                        {/* Reimbursement Options */}
+                        {isReimbursable && type === 'EXPENSE' && !initialData && (
+                            <div className="p-4 bg-yellow-500/5 rounded-2xl border border-dashed border-yellow-500/30 space-y-4 animate-in zoom-in-95 duration-300">
+                                <div className="flex items-center gap-2 text-yellow-500 text-[10px] font-black uppercase tracking-[2px]">
+                                    <CheckCircle2 className="h-3 w-3" /> Configuração de Reembolso
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="reimbursementDate" className="text-zinc-400 text-[10px] font-black uppercase tracking-[2px]">Data Prevista de Recebimento</Label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                                        <Input
+                                            id="reimbursementDate"
+                                            type="date"
+                                            {...register("reimbursementDate", { required: isReimbursable })}
+                                            className={cn(
+                                                "bg-zinc-900 border-zinc-800 h-10 pl-10 text-zinc-100 transition-all focus:border-yellow-500/50",
+                                                errors.reimbursementDate && "border-red-500/50 focus:border-red-500"
+                                            )}
+                                        />
+                                    </div>
+                                    {errors.reimbursementDate && (
+                                        <p className="text-[10px] text-red-500 font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-1 mt-1">Data obrigatória para reembolsos</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Recurrence Options Expanded */}
                         {isRecurring && (

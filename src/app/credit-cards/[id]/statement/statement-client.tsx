@@ -12,7 +12,8 @@ import {
     ArrowLeft,
     Trash2,
     Edit3,
-    MoreHorizontal
+    MoreHorizontal,
+    Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +28,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface StatementClientProps {
     card: any;
@@ -41,7 +52,7 @@ export function StatementClient({ card, categories, creditCards, accounts }: Sta
     const monthTransactions = card.transactions.filter((tx: any) => {
         const d = new Date(tx.date);
         return d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
-    });
+    }).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const totalAmount = monthTransactions.reduce((acc: number, tx: any) => acc + Math.abs(Number(tx.amount)), 0);
     const paidAmount = monthTransactions.filter((tx: any) => tx.isPaid).reduce((acc: number, tx: any) => acc + Math.abs(Number(tx.amount)), 0);
@@ -53,17 +64,45 @@ export function StatementClient({ card, categories, creditCards, accounts }: Sta
         setSelectedMonth(newDate);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir este lançamento?")) return;
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const handleDelete = async () => {
+        if (!deleteId) return;
         try {
-            await deleteTransaction(id);
+            await deleteTransaction(deleteId);
             toast.success("Lançamento excluído!");
-            // Note: Since this is a client component and we're using server actions, 
-            // revalidatePath in the action should handle the refresh if this were a server component.
-            // For client-side logic, we might need to trigger a router refresh or manually filter.
-            window.location.reload(); // Simple way to refresh data
+            window.location.reload();
         } catch (error) {
             toast.error("Erro ao excluir lançamento");
+        } finally {
+            setDeleteId(null);
+        }
+    };
+
+    const [payOpen, setPayOpen] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
+
+    const statementYear = selectedMonth.getFullYear();
+    const statementMonth = selectedMonth.getMonth();
+    const closingDate = new Date(statementYear, statementMonth, card.closingDay);
+    closingDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isInvoiceClosed = today >= closingDate;
+    const canPay = isInvoiceClosed && pendingAmount > 0;
+
+    const handlePayInvoice = async () => {
+        setIsPaying(true);
+        try {
+            const { payCreditCardInvoice } = await import("@/actions/invoice");
+            await payCreditCardInvoice(card.id, statementMonth, statementYear);
+            toast.success("Fatura paga com sucesso!");
+            setPayOpen(false);
+            window.location.reload();
+        } catch (error: any) {
+            toast.error(error.message || "Erro ao pagar fatura.");
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -91,21 +130,48 @@ export function StatementClient({ card, categories, creditCards, accounts }: Sta
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 backdrop-blur-sm self-start md:self-center">
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white" onClick={() => navigateMonth('prev')}>
-                        <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    <div className="flex flex-col items-center min-w-[140px]">
-                        <span className="text-xs font-black text-zinc-100 uppercase tracking-tighter capitalize">
-                            {format(selectedMonth, "MMMM", { locale: ptBR })}
-                        </span>
-                        <span className="text-[10px] font-bold text-zinc-500">
-                            {format(selectedMonth, "yyyy")}
-                        </span>
+                <div className="flex items-center gap-4 self-start md:self-center w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 backdrop-blur-sm">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white" onClick={() => navigateMonth('prev')}>
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <div className="flex flex-col items-center min-w-[140px]">
+                            <span className="text-xs font-black text-zinc-100 uppercase tracking-tighter capitalize">
+                                {format(selectedMonth, "MMMM", { locale: ptBR })}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500">
+                                {format(selectedMonth, "yyyy")}
+                            </span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white" onClick={() => navigateMonth('next')}>
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white" onClick={() => navigateMonth('next')}>
-                        <ChevronRight className="h-5 w-5" />
+
+                    <Button
+                        variant={canPay ? "default" : "outline"}
+                        disabled={!canPay}
+                        onClick={() => setPayOpen(true)}
+                        className={cn(
+                            "font-semibold transition-all text-white",
+                            canPay ? "bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 active:scale-95" : "border-zinc-800 text-zinc-500"
+                        )}
+                    >
+                        Pagar Fatura
                     </Button>
+
+                    <TransactionModal
+                        categories={categories}
+                        creditCards={creditCards}
+                        accounts={accounts}
+                        isCreditCardOnly={true}
+                        fixedCreditCardId={card.id}
+                        trigger={
+                            <Button className="bg-blue-600 hover:bg-blue-700 font-semibold shadow-lg shadow-blue-900/20 active:scale-95 transition-all text-white">
+                                <Plus className="h-4 w-4 mr-1.5" /> Lançar Gasto
+                            </Button>
+                        }
+                    />
                 </div>
             </div>
 
@@ -227,7 +293,7 @@ export function StatementClient({ card, categories, creditCards, accounts }: Sta
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => handleDelete(tx.id)}
+                                            onClick={() => setDeleteId(tx.id)}
                                             className="h-9 w-9 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-400/10 transition-all active:scale-90"
                                         >
                                             <Trash2 className="h-4.5 w-4.5" />
@@ -239,6 +305,53 @@ export function StatementClient({ card, categories, creditCards, accounts }: Sta
                     )}
                 </div>
             </div>
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent className="bg-zinc-950 border border-zinc-900 shadow-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white text-xl font-bold">Confirmação de Exclusão</AlertDialogTitle>
+                        <AlertDialogDescription className="text-zinc-400">
+                            Tem certeza que deseja excluir permanentemente este lançamento? Essa ação não pode ser desfeita e irá recalcular a fatura!
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="border-t border-zinc-900 pt-4 mt-2">
+                        <AlertDialogCancel className="bg-transparent border-none text-zinc-400 font-bold hover:bg-zinc-900 hover:text-white">
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="!bg-red-600/90 hover:!bg-red-600 !text-white font-bold"
+                        >
+                            Excluir Lançamento
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={payOpen} onOpenChange={setPayOpen}>
+                <AlertDialogContent className="bg-zinc-950 border border-zinc-900 shadow-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-emerald-400 text-xl font-bold flex items-center gap-2">
+                            <Receipt className="h-5 w-5" /> Confirmar Pagamento
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-zinc-400">
+                            O valor total de Pendentes (<strong>{pendingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>) será deduzido da sua conta do sistema. Você confirma essa ação?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="border-t border-zinc-900 pt-4 mt-2">
+                        <AlertDialogCancel disabled={isPaying} className="bg-transparent border-none text-zinc-400 font-bold hover:bg-zinc-900 hover:text-white">
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handlePayInvoice}
+                            disabled={isPaying}
+                            className="!bg-emerald-600 hover:!bg-emerald-700 !text-white font-bold"
+                        >
+                            {isPaying ? "Processando..." : "Confirmar Pagamento"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

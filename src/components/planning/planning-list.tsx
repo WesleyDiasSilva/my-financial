@@ -7,6 +7,7 @@ import { ShoppingCart, Banknote, ArrowUpDown, ChevronDown } from "lucide-react";
 import { CategoryActions } from "./category-actions";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PlanningListProps {
     title: string;
@@ -121,7 +122,14 @@ export function PlanningList({ title, type, items, transactions, sortBy, sortOrd
                                 <div className="flex-1 min-w-0">
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-3">
-                                            <h4 className="text-xl font-black text-white leading-tight line-clamp-2 tracking-tighter">{cat.name}</h4>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <h4 className="text-xl font-black text-white leading-tight line-clamp-2 tracking-tighter cursor-default">{cat.name}</h4>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="bg-zinc-900 border-zinc-800 text-white font-bold max-w-xs break-words">
+                                                    <p>{cat.name}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
                                             <div className="hidden xl:flex gap-2 shrink-0">
                                                 {cat.isRequired && <span className="text-[9px] font-black uppercase text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">Essencial</span>}
                                                 {cat.isFixed && <span className="text-[9px] font-black uppercase text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full border border-blue-400/20">Fixo</span>}

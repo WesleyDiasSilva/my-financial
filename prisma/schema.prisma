@@ -8,48 +8,48 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  name         String
-  email        String        @unique
-  cpf          String        @unique
-  phone        String
-  password     String
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  cpf           String        @unique
+  phone         String
+  password      String
   monthlyIncome Decimal?      @db.Decimal(10, 2)
-  accounts     Account[]
-  categories   Category[]
-  budgets      Budget[]
-  creditCards  CreditCard[]
-  transactions Transaction[]
-  goals        Goal[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  accounts      Account[]
+  categories    Category[]
+  budgets       Budget[]
+  creditCards   CreditCard[]
+  transactions  Transaction[]
+  goals         Goal[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Goal {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   name          String
-  targetAmount  Decimal  @db.Decimal(10, 2)
-  currentAmount Decimal  @default(0) @db.Decimal(10, 2)
+  targetAmount  Decimal   @db.Decimal(10, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(10, 2)
   deadline      DateTime?
   color         String?
   icon          String?
-  
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
-  id                String        @id @default(uuid())
+  id                String      @id @default(uuid())
   name              String
-  balance           Decimal       @db.Decimal(10, 2)
-  investmentBalance Decimal       @default(0) @db.Decimal(10, 2)
+  balance           Decimal     @db.Decimal(10, 2)
+  investmentBalance Decimal     @default(0) @db.Decimal(10, 2)
   type              AccountType
   color             String?
-  
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
   creditCards  CreditCard[]
@@ -58,16 +58,16 @@ model Account {
 }
 
 model Category {
-  id           String        @id @default(uuid())
+  id           String          @id @default(uuid())
   name         String
   type         TransactionType
   color        String?
-  monthlyLimit Decimal?      @db.Decimal(10, 2)
-  isRequired   Boolean       @default(false)
-  isFixed      Boolean       @default(false)
-  
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthlyLimit Decimal?        @db.Decimal(10, 2)
+  isRequired   Boolean         @default(false)
+  isFixed      Boolean         @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   budgets      Budget[]
   transactions Transaction[]
@@ -76,36 +76,36 @@ model Category {
 }
 
 model Budget {
-  id           String   @id @default(uuid())
-  amount       Decimal  @db.Decimal(10, 2)
-  month        Int
-  year         Int
-  
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String  @id @default(uuid())
+  amount Decimal @db.Decimal(10, 2)
+  month  Int
+  year   Int
 
-  categoryId   String
-  category     Category @relation(fields: [categoryId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([categoryId, month, year, userId])
 }
 
 model CreditCard {
-  id           String        @id @default(uuid())
-  name         String
-  limit        Decimal       @db.Decimal(10, 2)
-  closingDay   Int
-  dueDay       Int
-  color        String?
-  
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String  @id @default(uuid())
+  name       String
+  limit      Decimal @db.Decimal(10, 2)
+  closingDay Int
+  dueDay     Int
+  color      String?
 
-  accountId    String?
-  account      Account?      @relation(fields: [accountId], references: [id])
-  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
   transactions Transaction[]
   sortOrder    Int           @default(0)
   createdAt    DateTime      @default(now())
@@ -113,33 +113,33 @@ model CreditCard {
 }
 
 model Transaction {
-  id           String          @id @default(uuid())
-  description  String
-  amount       Decimal         @db.Decimal(10, 2)
-  date         DateTime
-  type         TransactionType
-  isPaid       Boolean         @default(true)
-  
-  // Recurrence fields
-  isRecurring       Boolean         @default(false)
-  recurrenceType    RecurrenceType?
-  recurrencePeriod  Int?            // e.g., every 1 month, every 2 weeks
-  parentId          String?         // Reference to the original transaction
-  
-  userId       String
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String          @id @default(uuid())
+  description String
+  amount      Decimal         @db.Decimal(10, 2)
+  date        DateTime
+  type        TransactionType
+  isPaid      Boolean         @default(true)
 
-  categoryId   String
-  category     Category        @relation(fields: [categoryId], references: [id])
-  
-  accountId    String?
-  account      Account?        @relation(fields: [accountId], references: [id])
-  
+  // Recurrence fields
+  isRecurring      Boolean         @default(false)
+  recurrenceType   RecurrenceType?
+  recurrencePeriod Int? // e.g., every 1 month, every 2 weeks
+  parentId         String? // Reference to the original transaction
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
   creditCardId String?
-  creditCard   CreditCard?     @relation(fields: [creditCardId], references: [id])
-  
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  creditCard   CreditCard? @relation(fields: [creditCardId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum AccountType {
