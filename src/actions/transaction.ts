@@ -20,6 +20,7 @@ export async function createTransaction(data: {
     installments?: number;
     isReimbursable?: boolean;
     reimbursementDate?: Date | null;
+    goalId?: string | null;
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
@@ -51,6 +52,7 @@ export async function createTransaction(data: {
     if (!cleanData.creditCardId) delete cleanData.creditCardId;
     if (!cleanData.recurrenceType) delete cleanData.recurrenceType;
     if (!cleanData.recurrencePeriod) delete cleanData.recurrencePeriod;
+    if (!cleanData.goalId) delete cleanData.goalId;
 
     if (installments > 1 && txData.creditCardId) {
         const transactions = [];
@@ -238,6 +240,7 @@ export async function updateTransaction(id: string, data: {
     installments?: number;
     isReimbursable?: boolean;
     reimbursementDate?: Date | null;
+    goalId?: string | null;
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
@@ -282,6 +285,9 @@ export async function updateTransaction(id: string, data: {
 
     if (creditCardId) updatePayload.creditCardId = creditCardId;
     else updatePayload.creditCardId = null;
+
+    if (txData.goalId) updatePayload.goalId = txData.goalId;
+    else updatePayload.goalId = null;
 
     const transaction = await prisma.transaction.update({
         where: { id },

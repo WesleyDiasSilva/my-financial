@@ -41,8 +41,22 @@ model Goal {
   color         String?
   icon          String?
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones   GoalMilestone[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  transactions Transaction[]
+}
+
+model GoalMilestone {
+  id          String  @id @default(uuid())
+  description String
+  amount      Decimal @db.Decimal(10, 2)
+  isCompleted Boolean @default(false)
+
+  goalId    String
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -60,6 +74,7 @@ model Account {
 
   transactions Transaction[]
   creditCards  CreditCard[]
+  sortOrder    Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -149,6 +164,9 @@ model Transaction {
 
   creditCardId String?
   creditCard   CreditCard? @relation(fields: [creditCardId], references: [id])
+
+  goalId String?
+  goal   Goal?   @relation(fields: [goalId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

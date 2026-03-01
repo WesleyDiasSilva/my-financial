@@ -9,9 +9,10 @@ interface InvestmentButtonProps {
     accountName: string;
     balance: number;
     investmentBalance: number;
+    goals?: { id: string; name: string }[];
 }
 
-export function InvestmentButton({ accountId, accountName, balance, investmentBalance }: InvestmentButtonProps) {
+export function InvestmentButton({ accountId, accountName, balance, investmentBalance, goals }: InvestmentButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -30,6 +31,7 @@ export function InvestmentButton({ accountId, accountName, balance, investmentBa
                 accountName={accountName}
                 balance={balance}
                 investmentBalance={investmentBalance}
+                goals={goals}
             />
         </>
     );

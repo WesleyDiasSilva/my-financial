@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Calculator, TrendingDown, Target, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Calculator, TrendingDown, Target, AlertTriangle, CheckCircle2, Loader2, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { getSimulationInsight, SimulationInsight } from "@/actions/ai-credit-cards";
+import { cn } from "@/lib/utils";
+import CurrencyInput from 'react-currency-input-field';
 
 interface SimulatorProps {
     initialCards: any[];
@@ -26,6 +29,8 @@ interface SimulatedPurchase {
 
 export function SimulatorClient({ initialCards, categories, accounts }: SimulatorProps) {
     const [simulations, setSimulations] = useState<SimulatedPurchase[]>([]);
+    const [insight, setInsight] = useState<SimulationInsight | null>(null);
+    const [insightLoading, setInsightLoading] = useState(false);
 
     // Form Input States
     const [simName, setSimName] = useState("");
@@ -39,7 +44,7 @@ export function SimulatorClient({ initialCards, categories, accounts }: Simulato
         const newSim = {
             id: Math.random().toString(),
             name: simName,
-            totalAmount: parseFloat(simAmount.replace(/\./g, '').replace(',', '.')),
+            totalAmount: parseFloat(simAmount.replace(',', '.')),
             installments: parseInt(simInstallments),
             categoryId: simCategory
         };
@@ -53,6 +58,27 @@ export function SimulatorClient({ initialCards, categories, accounts }: Simulato
 
     const handleRemoveSimulation = (id: string) => {
         setSimulations(simulations.filter(s => s.id !== id));
+    };
+
+    // AI Insight Trigger
+    const [lastSimLength, setLastSimLength] = useState(0);
+    const triggerAI = async () => {
+        if (simulations.length === 0) {
+            setInsight(null);
+            return;
+        }
+        setInsightLoading(true);
+        try {
+            const res = await getSimulationInsight({
+                simulations,
+                categories: categoryData
+            });
+            setInsight(res);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setInsightLoading(false);
+        }
     };
 
     // Calculate time frame (-2 to +3 months)
@@ -114,6 +140,13 @@ export function SimulatorClient({ initialCards, categories, accounts }: Simulato
 
     }, [initialCards, categories, simulations, timeLabels]);
 
+    useEffect(() => {
+        if (simulations.length !== lastSimLength) {
+            triggerAI();
+            setLastSimLength(simulations.length);
+        }
+    }, [simulations.length]);
+
     const globalChartData = timeLabels.map((lbl, idx) => {
         // Find top 3 categories by total lifetime value in this data snapshot
         const sortedCats = [...categoryData].sort((a, b) => b.monthlyTotals[idx] - a.monthlyTotals[idx]);
@@ -147,6 +180,76 @@ export function SimulatorClient({ initialCards, categories, accounts }: Simulato
                 </div>
             </div>
 
+            {/* AI Simulation Insight Card */}
+            {(insightLoading || insight) && (
+                <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className={cn(
+                        "relative glass-vibrant p-6 rounded-3xl border transition-all duration-500",
+                        insightLoading ? "border-white/5 opacity-50" :
+                            insight?.status === "danger" ? "border-rose-500/30 shadow-rose-500/5 shadow-2xl" :
+                                insight?.status === "warning" ? "border-amber-500/30 shadow-amber-500/5 shadow-2xl" :
+                                    "border-emerald-500/30 shadow-emerald-500/5 shadow-2xl"
+                    )}>
+                        {insightLoading ? (
+                            <div className="flex items-center gap-4 py-4">
+                                <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
+                                <div className="space-y-2 flex-1">
+                                    <div className="h-4 bg-white/10 rounded w-48" />
+                                    <div className="h-3 bg-white/10 rounded w-full" />
+                                </div>
+                            </div>
+                        ) : insight && (
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="flex gap-5 flex-1">
+                                    <div className={cn(
+                                        "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-lg",
+                                        insight.status === "danger" ? "bg-rose-500/20 border-rose-500/30" :
+                                            insight.status === "warning" ? "bg-amber-500/20 border-amber-500/30" :
+                                                "bg-emerald-500/20 border-emerald-500/30"
+                                    )}>
+                                        <Sparkles className={cn(
+                                            "w-7 h-7",
+                                            insight.status === "danger" ? "text-rose-400" :
+                                                insight.status === "warning" ? "text-amber-400" :
+                                                    "text-emerald-400"
+                                        )} />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <h4 className="font-black text-lg text-white leading-none flex items-center gap-2">
+                                            {insight.title}
+                                            <span className={cn(
+                                                "text-[10px] uppercase px-2 py-0.5 rounded-full font-black border",
+                                                insight.status === "danger" ? "bg-rose-500/10 border-rose-500/20 text-rose-500" :
+                                                    insight.status === "warning" ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+                                                        "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                            )}>
+                                                {insight.status === "danger" ? "Risco" : insight.status === "warning" ? "Atenção" : "Seguro"}
+                                            </span>
+                                        </h4>
+                                        <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-4xl">
+                                            {insight.description}
+                                        </p>
+                                    </div>
+                                </div>
+                                {insight.suggestion && (
+                                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl md:max-w-xs shrink-0 relative overflow-hidden group/sug">
+                                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                                            <Target className="w-10 h-10 text-indigo-400" />
+                                        </div>
+                                        <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest mb-2 flex items-center gap-2">
+                                            <Zap className="w-3.5 h-3.5" /> Recomendação IA
+                                        </p>
+                                        <p className="text-zinc-300 text-xs font-bold leading-snug">
+                                            {insight.suggestion}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
                 {/* Left Panel: Simulator Form */}
                 <Card className="xl:col-span-1 shadow-2xl border-zinc-800/50 bg-zinc-950/80 h-fit">
@@ -163,7 +266,15 @@ export function SimulatorClient({ initialCards, categories, accounts }: Simulato
                         </div>
                         <div className="space-y-2">
                             <Label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Valor Total (R$)</Label>
-                            <Input placeholder="0,00" value={simAmount} onChange={e => setSimAmount(e.target.value)} className="bg-zinc-900 border-zinc-800" />
+                            <CurrencyInput
+                                id="simAmount"
+                                placeholder="0,00"
+                                value={simAmount}
+                                onValueChange={(value) => setSimAmount(value || "")}
+                                intlConfig={{ locale: 'pt-BR', currency: 'BRL' }}
+                                decimalsLimit={2}
+                                className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white transition-all"
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Parcelas</Label>

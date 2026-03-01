@@ -10,6 +10,7 @@ import { CreditCard as CreditCardIcon, Calendar } from "lucide-react";
 import { CreditCardModal } from "@/components/modals/credit-card-modal";
 import { CreditCardList } from "@/components/credit-cards/credit-card-list";
 import { CreditCardProjectionsChart } from "@/components/credit-cards/credit-card-projections-chart";
+import { AICardInsights } from "@/components/credit-cards/ai-card-insights";
 import { Wallet, TrendingUp, CreditCard, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -159,6 +160,8 @@ export function CreditCardsClient({
                     </CardContent>
                 </Card>
             </div>
+
+            <AICardInsights />
 
             <CreditCardProjectionsChart cards={cards} />
 

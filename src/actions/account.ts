@@ -15,7 +15,10 @@ export async function getAccounts() {
 
     const accounts = await prisma.account.findMany({
         where: { userId: session.user.id },
-        orderBy: { name: 'asc' },
+        orderBy: [
+            { sortOrder: 'asc' },
+            { name: 'asc' }
+        ],
     });
 
     return accounts.map(acc => ({
@@ -209,4 +212,21 @@ export async function getAccountHealth(accountId: string) {
         runway: runway > 30 ? "> 30" : runway,
         projectedBalance
     };
+}
+
+export async function reorderAccounts(ids: string[]) {
+    const session = await getSession();
+    if (!session?.user?.id) throw new Error("Não autorizado");
+
+    // Perform updates in a transaction
+    await prisma.$transaction(
+        ids.map((id, index) =>
+            prisma.account.update({
+                where: { id, userId: session.user.id },
+                data: { sortOrder: index }
+            })
+        )
+    );
+
+    revalidatePath("/accounts");
 }

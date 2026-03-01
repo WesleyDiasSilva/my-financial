@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { createTransaction, updateTransaction } from "@/actions/transaction";
+import { getGoals } from "@/actions/goal";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ export function TransactionModal({
     fixedCreditCardId?: string
 }) {
     const [open, setOpen] = useState(false);
+    const [goals, setGoals] = useState<any[]>([]);
     const queryClient = useQueryClient();
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData ? {
@@ -51,10 +53,12 @@ export function TransactionModal({
             installments: 1,
             isReimbursable: initialData.isReimbursable ?? false,
             reimbursementDate: initialData.reimbursementDate ? new Date(initialData.reimbursementDate).toISOString().split('T')[0] : '',
+            goalId: initialData.goalId || "",
         } : {
             type: 'EXPENSE',
             paymentMethod: isCreditCardOnly ? 'CREDIT_CARD' : 'CASH',
             creditCardId: fixedCreditCardId || undefined,
+            goalId: "",
             accountId: isCreditCardOnly && fixedCreditCardId
                 ? creditCards.find(c => c.id === fixedCreditCardId)?.accountId
                 : undefined,
@@ -70,7 +74,10 @@ export function TransactionModal({
     });
     useEffect(() => {
         register("categoryId", { required: false });
-    }, [register]);
+        if (open) {
+            getGoals().then(setGoals).catch(console.error);
+        }
+    }, [register, open]);
 
     const [loading, setLoading] = useState(false);
 
@@ -152,6 +159,7 @@ export function TransactionModal({
                 // Extra fields mapped for Actions
                 isReimbursable: data.isReimbursable ?? false,
                 reimbursementDate: data.isReimbursable && data.reimbursementDate ? new Date(data.reimbursementDate + 'T12:00:00') : null,
+                goalId: data.goalId || null,
             };
 
             if (initialData) {
@@ -362,13 +370,32 @@ export function TransactionModal({
                                         {filteredCategories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.categoryId && (
-                                    <span className="text-[10px] text-red-500 font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-1 mt-1">
-                                        Categoria é obrigatória
-                                    </span>
-                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase text-zinc-500 font-bold tracking-tighter">Vincular a uma Meta?</Label>
+                                <Select value={watch("goalId") || ""} onValueChange={(val) => setValue("goalId", val === "NONE" ? "" : val)}>
+                                    <SelectTrigger className="bg-zinc-900 border-zinc-800 h-10 rounded-lg">
+                                        <SelectValue placeholder="Nenhuma meta / Opcional" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                        <SelectItem value="NONE" className="text-zinc-500 italic">Nenhuma meta</SelectItem>
+                                        {goals.map(g => (
+                                            <SelectItem key={g.id} value={g.id}>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: g.color || '#10b981' }} />
+                                                    <span className="truncate">{g.name}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
+
+                        {errors.categoryId && (
+                            <p className="text-[10px] text-red-500 font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-1 mt-1">Categoria é obrigatória</p>
+                        )}
 
                         {/* Features: Paid and Recurring and Reimbursable*/}
                         <div className={cn(
@@ -544,7 +571,7 @@ export function TransactionModal({
                         </Button>
                     </DialogFooter>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     );
 }

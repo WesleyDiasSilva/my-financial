@@ -10,7 +10,7 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { accountId, amount, operation } = await req.json();
+        const { accountId, amount, operation, goalId } = await req.json();
 
         if (!accountId || !amount || !operation) {
             return NextResponse.json({ message: "Campos obrigatórios faltando." }, { status: 400 });
@@ -31,6 +31,16 @@ export async function POST(req: Request) {
 
         if (!account) {
             return NextResponse.json({ message: "Conta não encontrada." }, { status: 404 });
+        }
+
+        // Validate goal if provided (only for apply operation)
+        if (goalId && operation === "apply") {
+            const goal = await prisma.goal.findFirst({
+                where: { id: goalId, userId: session.user.id }
+            });
+            if (!goal) {
+                return NextResponse.json({ message: "Meta não encontrada." }, { status: 404 });
+            }
         }
 
         const balance = Number(account.balance);
@@ -63,7 +73,7 @@ export async function POST(req: Request) {
         }
 
         const description = operation === "apply"
-            ? `Aplicação em investimento — ${account.name}`
+            ? (goalId ? `Aporte em meta: ${account.name}` : `Aplicação em investimento — ${account.name}`)
             : `Resgate de investimento — ${account.name}`;
 
         await prisma.$transaction(async (tx) => {
@@ -78,6 +88,7 @@ export async function POST(req: Request) {
                     userId: session.user.id,
                     categoryId: transferCategory!.id,
                     accountId,
+                    goalId: operation === "apply" ? goalId : undefined,
                 },
             });
 
@@ -90,6 +101,16 @@ export async function POST(req: Request) {
                         investmentBalance: { increment: parsedAmount },
                     },
                 });
+
+                // Update goal if provided
+                if (goalId) {
+                    await tx.goal.update({
+                        where: { id: goalId },
+                        data: {
+                            currentAmount: { increment: parsedAmount }
+                        }
+                    });
+                }
             } else {
                 await tx.account.update({
                     where: { id: accountId },

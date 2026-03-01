@@ -13,13 +13,15 @@ interface InvestmentModalProps {
     accountName: string;
     balance: number;
     investmentBalance: number;
+    goals?: { id: string; name: string }[];
 }
 
-export function InvestmentModal({ isOpen, onClose, accountId, accountName, balance, investmentBalance }: InvestmentModalProps) {
+export function InvestmentModal({ isOpen, onClose, accountId, accountName, balance, investmentBalance, goals }: InvestmentModalProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [operation, setOperation] = useState<"apply" | "withdraw">("apply");
     const [amount, setAmount] = useState("");
+    const [selectedGoalId, setSelectedGoalId] = useState("");
     const [error, setError] = useState("");
 
     if (!isOpen) return null;
@@ -63,7 +65,7 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
             const res = await fetch("/api/investment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accountId, amount: numericAmount, operation }),
+                body: JSON.stringify({ accountId, amount: numericAmount, operation, goalId: operation === "apply" ? selectedGoalId : undefined }),
             });
 
             const data = await res.json();
@@ -127,7 +129,7 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
                 <div className="grid grid-cols-2 gap-3 mb-6">
                     {/* Saldo Disponível */}
                     <div className={`bg-[#0a1114] border rounded-xl p-4 transition-colors ${numericAmount > 0 && operation === "apply" ? "border-red-500/30" :
-                            numericAmount > 0 && operation === "withdraw" ? "border-emerald-500/30" : "border-zinc-800"
+                        numericAmount > 0 && operation === "withdraw" ? "border-emerald-500/30" : "border-zinc-800"
                         }`}>
                         <div className="flex items-center gap-1.5 mb-2">
                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Saldo Disponível</p>
@@ -140,8 +142,8 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
                         <div className="flex items-center gap-2">
                             <Wallet className="w-4 h-4 text-cyan-400 shrink-0" />
                             <span className={`text-sm font-bold transition-colors ${numericAmount > 0
-                                    ? (previewBalance < 0 ? "text-red-400" : operation === "apply" ? "text-orange-300" : "text-emerald-400")
-                                    : "text-white"
+                                ? (previewBalance < 0 ? "text-red-400" : operation === "apply" ? "text-orange-300" : "text-emerald-400")
+                                : "text-white"
                                 }`}>
                                 {formatCurrency(numericAmount > 0 ? previewBalance : balance)}
                             </span>
@@ -150,7 +152,7 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
 
                     {/* Valor Investido */}
                     <div className={`bg-[#0a1114] border rounded-xl p-4 transition-colors ${numericAmount > 0 && operation === "apply" ? "border-emerald-500/30" :
-                            numericAmount > 0 && operation === "withdraw" ? "border-red-500/30" : "border-zinc-800"
+                        numericAmount > 0 && operation === "withdraw" ? "border-red-500/30" : "border-zinc-800"
                         }`}>
                         <div className="flex items-center gap-1.5 mb-2">
                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Valor Investido</p>
@@ -163,8 +165,8 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
                         <div className="flex items-center gap-2">
                             <TrendingUp className="w-4 h-4 text-purple-400 shrink-0" />
                             <span className={`text-sm font-bold transition-colors ${numericAmount > 0
-                                    ? (previewInvestment < 0 ? "text-red-400" : operation === "withdraw" ? "text-orange-300" : "text-emerald-400")
-                                    : "text-white"
+                                ? (previewInvestment < 0 ? "text-red-400" : operation === "withdraw" ? "text-orange-300" : "text-emerald-400")
+                                : "text-white"
                                 }`}>
                                 {formatCurrency(numericAmount > 0 ? previewInvestment : investmentBalance)}
                             </span>
@@ -202,6 +204,25 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
                             </p>
                         )}
                     </div>
+
+                    {/* Goal Selection (only for apply) */}
+                    {operation === "apply" && goals && goals.length > 0 && (
+                        <div className="mb-6 animate-in slide-in-from-top-2 duration-300">
+                            <label className="text-sm font-medium text-zinc-400 mb-2 block">Vincular a uma Meta (Opcional)</label>
+                            <select
+                                value={selectedGoalId}
+                                onChange={(e) => setSelectedGoalId(e.target.value)}
+                                className="w-full bg-[#0a1114] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="" className="bg-[#0c1a1f]">Nenhuma (Apenas Investimento)</option>
+                                {goals.map(goal => (
+                                    <option key={goal.id} value={goal.id} className="bg-[#0c1a1f]">
+                                        {goal.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Info Note */}
                     <div className="flex items-start gap-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl p-3 mb-6">

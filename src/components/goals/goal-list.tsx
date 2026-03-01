@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Trash, Edit, Target, Calendar, ArrowRight, TrendingUp } from "lucide-react";
+import { Trash, Edit, Target, Calendar, ArrowRight, TrendingUp, Flag } from "lucide-react";
 import { deleteGoal } from "@/actions/goal";
 import { GoalModal } from "@/components/modals/goal-modal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export function GoalList({ goals }: { goals: any[] }) {
+    const router = useRouter();
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [goalToDelete, setGoalToDelete] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -45,15 +47,19 @@ export function GoalList({ goals }: { goals: any[] }) {
                 const remaining = Number(goal.targetAmount) - Number(goal.currentAmount);
 
                 return (
-                    <div key={goal.id} className="group relative bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-8 hover:border-zinc-700 transition-all duration-300 shadow-2xl overflow-hidden">
+                    <div
+                        key={goal.id}
+                        onClick={() => router.push(`/goals/${goal.id}`)}
+                        className="group relative bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-8 hover:border-zinc-700 transition-all duration-300 shadow-2xl overflow-hidden cursor-pointer flex flex-col active:scale-[0.98]"
+                    >
                         {/* Status Line */}
                         <div className="absolute top-0 left-0 h-2 w-full opacity-60" style={{ backgroundColor: goal.color }} />
 
                         <div className="flex items-start justify-between mb-8">
-                            <div className="p-4 rounded-3xl bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 shadow-inner" style={{ color: goal.color }}>
+                            <div className="p-4 rounded-3xl bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 shadow-inner group-hover:scale-105 transition-transform" style={{ color: goal.color }}>
                                 <Target className="h-8 w-8" />
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                 <GoalModal initialData={goal} trigger={
                                     <Button variant="ghost" size="icon" className="h-10 w-10 text-zinc-400 hover:text-white bg-zinc-900/50 rounded-full">
                                         <Edit className="h-5 w-5" />
@@ -63,7 +69,11 @@ export function GoalList({ goals }: { goals: any[] }) {
                                     variant="ghost"
                                     size="icon"
                                     className="h-10 w-10 text-zinc-400 hover:text-red-400 bg-zinc-900/50 rounded-full"
-                                    onClick={() => { setGoalToDelete(goal); setDeleteOpen(true); }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setGoalToDelete(goal);
+                                        setDeleteOpen(true);
+                                    }}
                                 >
                                     <Trash className="h-5 w-5" />
                                 </Button>

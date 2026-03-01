@@ -7,6 +7,7 @@ import { getTransactions } from "@/actions/transaction";
 import { getCategories } from "@/actions/category";
 import { getCreditCards } from "@/actions/credit-card";
 import { getAccounts } from "@/actions/account";
+import { getGoals } from "@/actions/goal";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { ArrowLeft, Wallet, TrendingUp, HeartPulse, CalendarClock, CreditCard, Activity } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +34,7 @@ export default async function AccountDetailsPage({ params }: { params: Promise<{
     const categories = await getCategories();
     const creditCards = await getCreditCards();
     const accounts = await getAccounts();
+    const goals = await getGoals();
 
     // Filter transactions for this specific account
     const accountCcs = account.creditCards.map(c => c.id);
@@ -118,6 +120,7 @@ export default async function AccountDetailsPage({ params }: { params: Promise<{
                         accountName={account.name}
                         balance={Number(account.balance)}
                         investmentBalance={Number(account.investmentBalance)}
+                        goals={goals.map(g => ({ id: g.id, name: g.name }))}
                     />
                 </div>
             </header>
