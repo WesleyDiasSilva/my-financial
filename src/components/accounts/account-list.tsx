@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Landmark, TrendingUp, Wallet, GripVertical } from "lucide-react";
 import { AccountActions } from "@/components/accounts/account-actions";
 import Link from "next/link";
@@ -14,6 +14,11 @@ interface AccountListProps {
 export function AccountList({ initialAccounts }: AccountListProps) {
     const [accounts, setAccounts] = useState(initialAccounts);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+
+    // Sync state when server re-renders with new data (after revalidatePath)
+    useEffect(() => {
+        setAccounts(initialAccounts);
+    }, [initialAccounts]);
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
         setDraggedIdx(index);

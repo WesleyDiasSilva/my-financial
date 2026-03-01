@@ -65,7 +65,7 @@ export function InvestmentModal({ isOpen, onClose, accountId, accountName, balan
             const res = await fetch("/api/investment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accountId, amount: numericAmount, operation, goalId: operation === "apply" ? selectedGoalId : undefined }),
+                body: JSON.stringify({ accountId, amount: numericAmount, operation, goalId: (operation === "apply" && selectedGoalId) ? selectedGoalId : undefined }),
             });
 
             const data = await res.json();

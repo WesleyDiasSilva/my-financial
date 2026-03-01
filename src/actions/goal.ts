@@ -32,7 +32,15 @@ export async function createGoal(data: {
 
     revalidatePath("/goals");
     revalidatePath("/");
-    return goal;
+    return {
+        ...goal,
+        targetAmount: Number(goal.targetAmount),
+        currentAmount: Number(goal.currentAmount),
+        milestones: goal.milestones.map(m => ({
+            ...m,
+            amount: Number(m.amount)
+        }))
+    };
 }
 
 export async function getGoals() {
@@ -138,7 +146,12 @@ export async function updateGoal(id: string, data: any) {
     revalidatePath("/goals");
     revalidatePath(`/goals/${id}`);
     revalidatePath("/");
-    return goal;
+
+    return {
+        ...goal,
+        targetAmount: Number(goal.targetAmount),
+        currentAmount: Number(goal.currentAmount),
+    };
 }
 
 export async function toggleMilestone(id: string, isCompleted: boolean) {

@@ -10,7 +10,9 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { accountId, amount, operation, goalId } = await req.json();
+        const body = await req.json();
+        const { accountId, amount, operation } = body;
+        const goalId = body.goalId || undefined; // Sanitize: empty string -> undefined
 
         if (!accountId || !amount || !operation) {
             return NextResponse.json({ message: "Campos obrigatórios faltando." }, { status: 400 });
