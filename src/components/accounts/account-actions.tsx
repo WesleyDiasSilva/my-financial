@@ -27,27 +27,34 @@ export function AccountActions({ account }: { account: any }) {
     };
 
     return (
-        <>
+        <div onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                         <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800 text-white">
+                <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800 text-white w-56">
                     <AccountModal
                         initialData={account}
                         trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
-                                <Edit className="mr-2 h-4 w-4 text-zinc-400" /> Editar
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer gap-2">
+                                <Edit className="h-4 w-4 text-zinc-400" /> Editar Dados Bancários
                             </DropdownMenuItem>
                         }
                     />
+                    <DropdownMenuItem disabled className="gap-2 text-zinc-500">
+                        <MoreVertical className="h-4 w-4 text-zinc-600" /> Sincronizar Saldo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled className="gap-2 text-zinc-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-archive text-zinc-600"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>
+                        Arquivar Conta
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                         onSelect={() => setDeleteOpen(true)}
-                        className="text-red-500 hover:text-red-400 focus:text-red-400 cursor-pointer"
+                        className="text-red-500 hover:text-red-400 focus:text-red-400 cursor-pointer gap-2"
                     >
-                        <Trash className="mr-2 h-4 w-4" /> Excluir
+                        <Trash className="h-4 w-4" /> Excluir Conta
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -73,6 +80,6 @@ export function AccountActions({ account }: { account: any }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </>
+        </div>
     );
 }

@@ -38,6 +38,7 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     email: user.email,
                     cpf: user.cpf,
+                    isAdmin: user.isAdmin,
                 };
             },
         }),
@@ -48,6 +49,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.cpf = (user as any).cpf;
+                token.isAdmin = (user as any).isAdmin;
             }
             return token;
         },
@@ -55,6 +57,7 @@ export const authOptions: NextAuthOptions = {
             if (token && session.user) {
                 session.user.id = token.id as string;
                 (session.user as any).cpf = token.cpf as string;
+                (session.user as any).isAdmin = token.isAdmin as boolean;
             }
             return session;
         },

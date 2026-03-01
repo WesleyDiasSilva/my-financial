@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { AIChat } from "@/components/dashboard/ai-chat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyFinancial - Gestão Pessoal",
+  title: "MyLife - Gestão Pessoal",
   description: "Sistema inteligente de gerenciamento financeiro",
 };
 
@@ -39,6 +40,7 @@ export default function RootLayout({
               <main className="flex-1 flex flex-col overflow-y-auto">
                 {children}
               </main>
+              <AIChat />
             </TooltipProvider>
           </QueryProvider>
         </SessionProvider>

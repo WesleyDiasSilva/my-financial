@@ -144,7 +144,7 @@ export const ReportDocument = ({ data }: ReportProps) => (
             {/* Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={styles.title}>MyFinancial</Text>
+                    <Text style={styles.title}>MyLife</Text>
                     <Text style={styles.subtitle}>Relatório de Gestão Financeira</Text>
                 </View>
                 <View>
@@ -235,7 +235,7 @@ export const ReportDocument = ({ data }: ReportProps) => (
             )}
 
             <View style={styles.footer}>
-                <Text>MyFinancial - Gestão Inteligente</Text>
+                <Text>MyLife - Gestão Inteligente</Text>
                 <Text>Gerado em {new Date().toLocaleString('pt-BR')}</Text>
                 <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} fixed />
             </View>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MyLife AI Super Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "accent": "#00E5FF",
+                        "vibrant-green": "#10b981",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#0a0c10",
+                        "card-dark": "#12161d",
+                    },
+                    fontFamily: {
+                        "display": ["Sora"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body { font-family: 'Sora', sans-serif; }
+        }
+        .glass {
+            background: rgba(18, 22, 29, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-vibrant {
+            background: linear-gradient(135deg, rgba(25, 120, 229, 0.1), rgba(0, 229, 255, 0.05));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+        }
+        .sidebar-item-active {
+            color: #00E5FF;
+            background: rgba(0, 229, 255, 0.08);
+            border-left: 3px solid #00E5FF;
+        }
+        .ai-glow-badge {
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+            animation: pulse-glow 3s infinite;
+        }
+        .ai-fab-glow {
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.5);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-100 font-display">
+<div class="flex min-h-screen">
+<aside class="w-64 border-r border-white/5 flex flex-col fixed h-full bg-background-dark z-50">
+<div class="p-8">
+<h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-3xl text-accent">hub</span>
+                    MyLife <span class="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">AI</span>
+</h1>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="sidebar-item-active flex items-center gap-3 px-4 py-3 rounded-r-lg font-semibold transition-all" href="#">
+<span class="material-icons-round text-xl">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-icons-round text-xl">account_balance_wallet</span> Finanças
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-icons-round text-xl">insights</span> Análise Pro
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-icons-round text-xl">track_changes</span> Metas
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-lg transition-all" href="#">
+<span class="material-icons-round text-xl">auto_awesome</span> Lifestyle
+                </a>
+</nav>
+<div class="p-4 border-t border-white/5">
+<div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl">
+<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center font-bold text-white text-sm">
+                        AD
+                    </div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold truncate">Alex Designer</p>
+<p class="text-[10px] text-accent truncate uppercase font-bold tracking-tight">Premium AI</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 ml-64 p-10">
+<header class="flex justify-between items-center mb-10">
+<div>
+<h2 class="text-4xl font-extrabold tracking-tight">AI Super Dashboard</h2>
+<p class="text-slate-400 text-sm mt-1">Inteligência artificial monitorando cada centavo em tempo real.</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center glass px-4 py-2 rounded-lg border border-white/10">
+<span class="material-icons-round text-slate-400 text-sm mr-2">calendar_today</span>
+<select class="bg-transparent border-none text-sm font-bold focus:ring-0 p-0 pr-8">
+<option>Fevereiro 2024</option>
+<option>Janeiro 2024</option>
+</select>
+</div>
+<button class="bg-vibrant-green hover:bg-emerald-500 text-background-dark px-6 py-2.5 rounded-lg font-extrabold flex items-center gap-2 transition-all shadow-lg shadow-vibrant-green/20">
+<span class="material-icons-round text-lg">add</span>
+                        Nova Transação
+                    </button>
+</div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="glass p-6 rounded-2xl relative border border-white/5 group hover:border-accent/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Saldo Líquido Real</p>
+<span class="ai-glow-badge bg-accent/20 text-accent text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] fill-1">auto_awesome</span> AI LIVE
+                        </span>
+</div>
+<h3 class="text-2xl font-black text-white">R$ 42.850,00</h3>
+<p class="text-[10px] text-slate-500 mt-2">Contas + Investimentos - Cartões</p>
+</div>
+<div class="glass p-6 rounded-2xl relative border border-white/5 group hover:border-purple-500/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-purple-400">Total Investido</p>
+<span class="ai-glow-badge bg-purple-500/20 text-purple-400 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] fill-1">auto_awesome</span> AI LIVE
+                        </span>
+</div>
+<h3 class="text-2xl font-black text-white">R$ 158.420,00</h3>
+<p class="text-[10px] text-emerald-500 mt-2 font-bold">+R$ 1.250,40 (0.8%)</p>
+</div>
+<div class="glass p-6 rounded-2xl relative border border-white/5 group hover:border-orange-500/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-orange-400">Fatura do Mês</p>
+<span class="ai-glow-badge bg-orange-500/20 text-orange-400 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] fill-1">auto_awesome</span> AI LIVE
+                        </span>
+</div>
+<h3 class="text-2xl font-black text-white">R$ 5.120,00</h3>
+<p class="text-[10px] text-slate-500 mt-2">Limite: R$ 15.000,00</p>
+</div>
+<div class="glass p-6 rounded-2xl relative border border-white/5 group hover:border-vibrant-green/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-vibrant-green">Resultado do Mês</p>
+<span class="ai-glow-badge bg-vibrant-green/20 text-vibrant-green text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] fill-1">auto_awesome</span> AI LIVE
+                        </span>
+</div>
+<h3 class="text-2xl font-black text-white">R$ 9.900,00</h3>
+<p class="text-[10px] text-slate-500 mt-2">Receitas - Despesas</p>
+</div>
+</div>
+<section class="mb-10">
+<div class="flex items-center gap-3 mb-5">
+<span class="material-symbols-outlined text-accent text-2xl">psychology</span>
+<h4 class="font-bold text-base uppercase tracking-wider text-slate-200">Insights da Inteligência</h4>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 overflow-x-auto pb-2 hide-scrollbar">
+<div class="glass-vibrant p-6 rounded-2xl min-w-[320px] flex flex-col justify-between hover:border-accent transition-all cursor-pointer">
+<div class="flex gap-4 mb-4">
+<div class="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+<span class="material-symbols-outlined">savings</span>
+</div>
+<div class="flex-1">
+<h5 class="text-xs font-black text-accent uppercase tracking-tighter">Economia Detectada</h5>
+<p class="text-sm text-slate-200 leading-tight mt-1.5">Você gastou 15% menos em Uber. Mover <span class="font-black text-accent">R$ 120</span> para a meta Viagem?</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-accent text-background-dark text-[10px] font-black py-2.5 rounded-lg hover:brightness-110 uppercase">Efetuar Agora</button>
+<button class="px-4 bg-white/5 text-white text-[10px] font-bold py-2.5 rounded-lg hover:bg-white/10 uppercase">Adaptar</button>
+</div>
+</div>
+<div class="glass-vibrant p-6 rounded-2xl min-w-[320px] flex flex-col justify-between border-orange-500/20 hover:border-orange-500/40 transition-all cursor-pointer">
+<div class="flex gap-4 mb-4">
+<div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="flex-1">
+<h5 class="text-xs font-black text-orange-400 uppercase tracking-tighter">Alerta de Orçamento</h5>
+<p class="text-sm text-slate-200 leading-tight mt-1.5">Gastos com iFood podem estourar sua meta em <span class="font-black text-orange-400">4 dias</span>.</p>
+</div>
+</div>
+<button class="w-full bg-orange-500/20 text-orange-400 text-[10px] font-black py-2.5 rounded-lg border border-orange-500/30 hover:bg-orange-500/30 uppercase">Revisar Limite</button>
+</div>
+<div class="glass-vibrant p-6 rounded-2xl min-w-[320px] flex flex-col justify-between border-primary/20 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex gap-4 mb-4">
+<div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<div class="flex-1">
+<h5 class="text-xs font-black text-primary uppercase tracking-tighter">Oportunidade AI</h5>
+<p class="text-sm text-slate-200 leading-tight mt-1.5">O CDB liquidez diária subiu para 105% do CDI. Sugerimos realocação.</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white text-[10px] font-black py-2.5 rounded-lg hover:brightness-110 uppercase">Ver Detalhes</button>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+<div class="lg:col-span-2 glass p-8 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h4 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                                Fluxo de Caixa &amp; Projeção AI
+                            </h4>
+<p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">Baseado em 15 dias de análise comportamental</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-[9px] font-bold text-slate-400 uppercase">Realizado</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-0.5 border-t-2 border-dashed border-accent"></span>
+<span class="text-[9px] font-bold text-accent uppercase">Projeção AI</span>
+</div>
+</div>
+</div>
+<div class="h-64 relative flex items-end justify-between px-2 mb-8 group">
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full bg-primary/40 h-[45%] rounded-t-sm hover:bg-primary transition-all"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full bg-primary/40 h-[65%] rounded-t-sm hover:bg-primary transition-all"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full bg-primary/40 h-[50%] rounded-t-sm hover:bg-primary transition-all"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full bg-primary/40 h-[80%] rounded-t-sm hover:bg-primary transition-all"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full bg-primary/40 h-[35%] rounded-t-sm hover:bg-primary transition-all"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full border-x border-t border-dashed border-accent/60 h-[55%] rounded-t-sm bg-accent/5"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full border-x border-t border-dashed border-accent/60 h-[75%] rounded-t-sm bg-accent/5"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full border-x border-t border-dashed border-accent/60 h-[65%] rounded-t-sm bg-accent/5"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full border-x border-t border-dashed border-accent/60 h-[85%] rounded-t-sm bg-accent/5"></div></div>
+<div class="flex-1 flex items-end justify-center px-1"><div class="w-full border-x border-t border-dashed border-accent/60 h-[58%] rounded-t-sm bg-accent/5"></div></div>
+<div class="absolute inset-x-0 bottom-0 flex justify-between text-[9px] text-slate-500 font-bold uppercase pt-3 border-t border-white/5">
+<span>Hoje</span>
+<span>+5 dias</span>
+<span>+10 dias</span>
+<span>+15 dias</span>
+</div>
+</div>
+<div class="bg-accent/5 border border-accent/10 p-4 rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-accent text-3xl">psychology</span>
+<p class="text-xs text-slate-300 leading-relaxed">
+<span class="font-black text-accent uppercase tracking-tighter">Previsão:</span> Identificamos R$ 840 em contas vindo na próxima semana. Seu saldo deve se manter em <span class="text-emerald-500 font-bold">R$ 1.669,36</span> até o fim do mês.
+                        </p>
+</div>
+</div>
+<div class="glass p-8 rounded-2xl border border-white/5">
+<h4 class="text-lg font-bold mb-8 flex items-center gap-2">
+<span class="material-icons-round text-slate-400">history</span>
+                        Atividades Recentes
+                    </h4>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-vibrant-green/10 flex items-center justify-center text-vibrant-green">
+<span class="material-icons-round">payments</span>
+</div>
+<div>
+<p class="text-sm font-bold">Salário Mensal</p>
+<p class="text-[10px] text-slate-500 uppercase">Bossa Invest • Hoje</p>
+</div>
+</div>
+<span class="text-sm font-black text-vibrant-green">+R$ 9.900,00</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+<span class="material-icons-round">shopping_cart</span>
+</div>
+<div>
+<p class="text-sm font-bold">Supermercado</p>
+<p class="text-[10px] text-slate-500 uppercase">Pão de Açúcar • Ontem</p>
+</div>
+</div>
+<span class="text-sm font-black text-slate-200">-R$ 452,10</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+<span class="material-icons-round">commute</span>
+</div>
+<div>
+<p class="text-sm font-bold">Uber Trip</p>
+<p class="text-[10px] text-slate-500 uppercase">Transporte • 08 Fev</p>
+</div>
+</div>
+<span class="text-sm font-black text-slate-200">-R$ 28,90</span>
+</div>
+</div>
+<button class="w-full mt-10 text-[10px] font-black py-3 rounded-lg border border-white/5 hover:bg-white/5 uppercase transition-all tracking-widest">Ver Todo Extrato</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+<div class="glass p-8 rounded-2xl border border-white/5">
+<h4 class="text-lg font-bold mb-6 flex items-center gap-2 uppercase tracking-tight">
+<span class="material-symbols-outlined text-primary">pie_chart</span>
+                        Controle de Gastos
+                    </h4>
+<div class="flex flex-col items-center justify-center py-4">
+<div class="relative w-40 h-40 flex items-center justify-center mb-6">
+<svg class="w-full h-full -rotate-90">
+<circle cx="80" cy="80" fill="transparent" r="70" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
+<circle cx="80" cy="80" fill="transparent" r="70" stroke="#1978e5" stroke-dasharray="439.8" stroke-dashoffset="153.9" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute text-center">
+<span class="text-3xl font-black text-white">65%</span>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Utilizado</p>
+</div>
+</div>
+<div class="w-full grid grid-cols-2 gap-4">
+<div class="bg-white/5 p-3 rounded-xl border border-white/5">
+<p class="text-[9px] text-slate-500 uppercase font-bold">Gasto Atual</p>
+<p class="text-base font-black">R$ 5.120,00</p>
+</div>
+<div class="bg-white/5 p-3 rounded-xl border border-white/5">
+<p class="text-[9px] text-slate-500 uppercase font-bold">Disponível</p>
+<p class="text-base font-black text-emerald-500">R$ 2.880,00</p>
+</div>
+</div>
+</div>
+</div>
+<div class="glass p-8 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-6">
+<h4 class="text-lg font-bold flex items-center gap-2 uppercase tracking-tight">
+<span class="material-symbols-outlined text-purple-400">subscriptions</span>
+                            Assinaturas
+                        </h4>
+<span class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded font-bold uppercase">Detectado pela AI</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center"><span class="material-icons-round text-red-500">play_arrow</span></div>
+<div>
+<p class="text-sm font-bold">Netflix Standard</p>
+<p class="text-[10px] text-slate-500 uppercase">Entretenimento</p>
+</div>
+</div>
+<span class="text-sm font-black text-white">R$ 39,90</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center"><span class="material-icons-round text-green-500">music_note</span></div>
+<div>
+<p class="text-sm font-bold">Spotify Premium</p>
+<p class="text-[10px] text-slate-500 uppercase">Música</p>
+</div>
+</div>
+<span class="text-sm font-black text-white">R$ 21,90</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><span class="material-symbols-outlined text-sm text-blue-500">cloud</span></div>
+<div>
+<p class="text-sm font-bold">iCloud+ 50GB</p>
+<p class="text-[10px] text-slate-500 uppercase">Armazenamento</p>
+</div>
+</div>
+<span class="text-sm font-black text-white">R$ 3,50</span>
+</div>
+</div>
+<button class="w-full mt-6 text-[10px] font-black py-3 rounded-lg border border-purple-500/20 hover:bg-purple-500/5 uppercase transition-all tracking-widest text-purple-400">Otimizar Gastos Fixos</button>
+</div>
+<div class="glass p-8 rounded-2xl border border-white/5">
+<h4 class="text-lg font-bold mb-6 flex items-center gap-2 uppercase tracking-tight">
+<span class="material-symbols-outlined text-orange-400">event_upcoming</span>
+                        Compromissos
+                    </h4>
+<div class="space-y-4">
+<div class="glass p-4 rounded-xl flex items-center justify-between border-l-4 border-l-red-500 bg-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center"><span class="material-icons-round text-sm text-slate-400">description</span></div>
+<div>
+<p class="text-xs font-bold">Fatura Cartão CC</p>
+<p class="text-[9px] text-red-500 font-bold uppercase">Vence Hoje</p>
+</div>
+</div>
+<span class="text-sm font-black text-white">-R$ 5.120,00</span>
+</div>
+<div class="glass p-4 rounded-xl flex items-center justify-between border-l-4 border-l-orange-400 bg-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center"><span class="material-icons-round text-sm text-slate-400">bolt</span></div>
+<div>
+<p class="text-xs font-bold">Conta de Luz (Enel)</p>
+<p class="text-[9px] text-slate-500 font-bold uppercase">Vence em 4 dias</p>
+</div>
+</div>
+<span class="text-sm font-black text-white">-R$ 245,10</span>
+</div>
+</div>
+<button class="w-full mt-6 text-[10px] font-black py-3 rounded-lg border border-white/5 hover:bg-white/5 uppercase transition-all tracking-widest">Ver Calendário</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-1 gap-8 pb-10">
+<div>
+<h4 class="text-lg font-bold mb-6 flex items-center gap-2 uppercase tracking-tight">
+<span class="material-symbols-outlined text-vibrant-green">calendar_month</span>
+                        Projeção de Saúde Financeira
+                    </h4>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="glass p-6 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Março 2024</span>
+<span class="text-[9px] bg-vibrant-green/10 text-vibrant-green px-2 py-0.5 rounded font-black uppercase">Saudável</span>
+</div>
+<p class="text-[9px] text-slate-500 uppercase mb-1">Resultado Estimado</p>
+<p class="text-2xl font-black text-white">R$ 2.450,00</p>
+<div class="mt-4 h-1.5 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-green w-[85%]"></div>
+</div>
+</div>
+<div class="glass p-6 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Abril 2024</span>
+<span class="text-[9px] bg-vibrant-green/10 text-vibrant-green px-2 py-0.5 rounded font-black uppercase">Saudável</span>
+</div>
+<p class="text-[9px] text-slate-500 uppercase mb-1">Resultado Estimado</p>
+<p class="text-2xl font-black text-white">R$ 1.890,00</p>
+<div class="mt-4 h-1.5 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-green w-[65%]"></div>
+</div>
+</div>
+<div class="glass p-6 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Maio 2024</span>
+<span class="text-[9px] bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded font-black uppercase">Atenção</span>
+</div>
+<p class="text-[9px] text-slate-500 uppercase mb-1">Resultado Estimado</p>
+<p class="text-2xl font-black text-white">R$ 420,00</p>
+<div class="mt-4 h-1.5 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-orange-400 w-[20%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<button class="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-accent text-background-dark flex items-center justify-center ai-fab-glow transition-transform hover:scale-110 active:scale-95 z-[100] group">
+<span class="material-symbols-outlined text-3xl font-black">spark</span>
+<div class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 border-4 border-background-dark rounded-full flex items-center justify-center text-[11px] font-black text-white">1</div>
+</button>
+<button class="fixed bottom-8 left-8 w-12 h-12 rounded-full glass border border-white/10 flex items-center justify-center shadow-xl transition-all hover:bg-white/10 z-[100]" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-icons-round text-accent text-xl">dark_mode</span>
+</button>
+
+</body></html>

@@ -56,7 +56,7 @@ export function AlertsPanel({ accounts, creditCards, transactions, categories }:
                 id: `card-${card.id}`,
                 type: daysUntilDue <= 2 ? "danger" : "warning",
                 icon: <CreditCard className="h-4 w-4" />,
-                title: `Fatura vence em ${daysUntilDue} dia${daysUntilDue !== 1 ? 's' : ''} — ${card.name}`,
+                title: `Fatura ${daysUntilDue === 0 ? 'vence hoje' : daysUntilDue === 1 ? 'em 1 dia' : `vence em ${daysUntilDue} dias`} — ${card.name}`,
                 description: `Valor da fatura: ${monthlyInvoice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}. Vencimento dia ${dueDay}.`,
             });
         }

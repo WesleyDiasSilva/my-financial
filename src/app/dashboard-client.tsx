@@ -15,6 +15,9 @@ import { MonthFilter } from "@/components/dashboard/month-filter";
 import { TransactionModal } from "@/components/modals/transaction-modal";
 import { cn } from "@/lib/utils";
 
+import { LifeAtAGlance } from "@/components/dashboard/life-at-a-glance";
+import { ExpenseTracking } from "@/components/dashboard/expense-tracking";
+
 interface DashboardClientProps {
     initialTransactions: any[];
     initialCreditCards: any[];
@@ -204,11 +207,6 @@ export function DashboardClient({
                 categories={categories}
             />
 
-            <FinancialProjection
-                accounts={accounts}
-                transactions={transactions}
-            />
-
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4">
                     <CardHeader>
@@ -223,7 +221,7 @@ export function DashboardClient({
                 </Card>
                 <Card className="col-span-3">
                     <CardHeader>
-                        <CardTitle>Gastos Recentes</CardTitle>
+                        <CardTitle>Atividades Recentes</CardTitle>
                         <CardDescription>
                             As últimas 5 transações realizadas
                         </CardDescription>
@@ -249,6 +247,21 @@ export function DashboardClient({
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+
+            <FinancialProjection
+                accounts={accounts}
+                transactions={transactions}
+            />
+
+            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+                <LifeAtAGlance transactions={transactions} creditCards={creditCards} />
+                <ExpenseTracking
+                    transactions={transactions}
+                    categories={categories}
+                    currentMonth={currentMonth}
+                    currentYear={currentYear}
+                />
             </div>
         </div>
     );

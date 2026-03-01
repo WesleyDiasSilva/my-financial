@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDownRight, ArrowUpRight, Filter, Search, MoreHorizontal, Trash, Edit, ArrowUpDown, Clock, CheckCircle2, Repeat } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ArrowLeftRight, Filter, Search, MoreHorizontal, Trash, Edit, ArrowUpDown, Clock, CheckCircle2, Repeat, MinusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deleteTransaction, deleteTransactions, toggleTransactionPaid } from "@/actions/transaction";
@@ -13,11 +13,12 @@ import { TransactionModal } from "@/components/modals/transaction-modal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function TransactionList({ transactions, categories, creditCards, accounts }: { transactions: any[], categories: any[], creditCards: any[], accounts: any[] }) {
+export function TransactionList({ transactions, categories, creditCards, accounts, initialAccountFilter = "all", initialStatusFilter = "all" }: { transactions: any[], categories: any[], creditCards: any[], accounts: any[], initialAccountFilter?: string, initialStatusFilter?: string }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [typeFilter, setTypeFilter] = useState("all");
     const [monthFilter, setMonthFilter] = useState("all");
-    const [accountFilter, setAccountFilter] = useState("all");
+    const [accountFilter, setAccountFilter] = useState(initialAccountFilter);
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [txToDelete, setTxToDelete] = useState<any>(null);
@@ -99,13 +100,16 @@ export function TransactionList({ transactions, categories, creditCards, account
             const matchSearch = tx.description.toLowerCase().includes(searchLower) || String(tx.amount).includes(searchLower);
 
             // Type
-            const matchType = typeFilter === "all" || (typeFilter === "income" && tx.type === "INCOME") || (typeFilter === "expense" && tx.type === "EXPENSE");
+            const matchType = typeFilter === "all" || (typeFilter === "income" && tx.type === "INCOME") || (typeFilter === "expense" && tx.type === "EXPENSE") || (typeFilter === "transfer" && tx.type === "TRANSFER");
 
             // Month
             const txMonth = new Date(tx.date).getMonth() + 1; // 1 to 12
             const txYear = new Date(tx.date).getFullYear();
-            const txMonthKey = `${txYear}-${txMonth.toString().padStart(2, '0')}`;
+            const txMonthKey = `${txYear} -${txMonth.toString().padStart(2, '0')} `;
             const matchMonth = monthFilter === "all" || monthFilter === txMonthKey;
+
+            // Status Filter
+            const matchStatus = statusFilter === "all" || (statusFilter === "paid" && tx.isPaid) || (statusFilter === "pending" && !tx.isPaid);
 
             // Account Filter (Direct Account OR via Linked Credit Card)
             let matchAcct = true;
@@ -120,7 +124,7 @@ export function TransactionList({ transactions, categories, creditCards, account
                 }
             }
 
-            return matchSearch && matchType && matchMonth && matchAcct;
+            return matchSearch && matchType && matchMonth && matchStatus && matchAcct;
         });
 
         if (sortConfig !== null) {
@@ -137,13 +141,13 @@ export function TransactionList({ transactions, categories, creditCards, account
             });
         }
         return currentTransactions;
-    }, [transactions, searchTerm, typeFilter, monthFilter, accountFilter, sortConfig, creditCards]);
+    }, [transactions, searchTerm, typeFilter, monthFilter, statusFilter, accountFilter, sortConfig, creditCards]);
 
     const availableMonths = useMemo(() => {
         const unique = new Set<string>();
         transactions.forEach(tx => {
             const d = new Date(tx.date);
-            unique.add(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+            unique.add(`${d.getFullYear()} -${(d.getMonth() + 1).toString().padStart(2, '0')} `);
         });
         return Array.from(unique).sort().reverse();
     }, [transactions]);
@@ -156,6 +160,12 @@ export function TransactionList({ transactions, categories, creditCards, account
 
     return (
         <div className="flex flex-col w-full h-full">
+            <div className="flex items-center justify-between mt-2">
+                <p className="text-sm font-medium text-zinc-400">
+                    Exibindo {filtered.length} de {transactions.length} registros de conta
+                </p>
+            </div>
+
             <div className="flex flex-wrap items-center gap-4 mt-6">
                 <div className="relative flex-[1_1_300px] min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -186,6 +196,17 @@ export function TransactionList({ transactions, categories, creditCards, account
                         <SelectItem value="all">Todas</SelectItem>
                         <SelectItem value="income">Receitas</SelectItem>
                         <SelectItem value="expense">Despesas</SelectItem>
+                        <SelectItem value="transfer">Transferências</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[150px] bg-zinc-900 border-zinc-800 flex-shrink-0">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        <SelectItem value="paid">Efetivadas</SelectItem>
+                        <SelectItem value="pending">Pendentes</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={monthFilter} onValueChange={setMonthFilter}>
@@ -219,7 +240,7 @@ export function TransactionList({ transactions, categories, creditCards, account
                                 <div className="flex items-center justify-center">
                                     <input
                                         type="checkbox"
-                                        className="h-4 w-4 rounded border-zinc-800 bg-zinc-900 text-emerald-600 focus:ring-emerald-600 focus:ring-offset-zinc-950"
+                                        className="appearance-none relative h-4 w-4 rounded-full border border-zinc-700 bg-zinc-900 cursor-pointer transition-all outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 checked:bg-emerald-500 checked:border-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[5px] after:w-[4px] after:h-[8px] after:border-b-2 after:border-r-2 after:border-white after:rotate-45 after:opacity-0 checked:after:opacity-100"
                                         checked={filtered.length > 0 && filtered.map(tx => tx.id).every(id => selectedIds.includes(id))}
                                         onChange={toggleAllSelection}
                                     />
@@ -232,7 +253,7 @@ export function TransactionList({ transactions, categories, creditCards, account
                             <TableHead className="cursor-pointer hover:text-white" onClick={() => toggleSort("category")}>
                                 <div className="flex items-center gap-1">Categoria <ArrowUpDown className="h-3 w-3" /></div>
                             </TableHead>
-                            <TableHead>Conta/Cartão</TableHead>
+                            <TableHead>Conta</TableHead>
                             <TableHead className="text-right cursor-pointer hover:text-white" onClick={() => toggleSort("amount")}>
                                 <div className="flex justify-end items-center gap-1">Valor <ArrowUpDown className="h-3 w-3" /></div>
                             </TableHead>
@@ -257,13 +278,13 @@ export function TransactionList({ transactions, categories, creditCards, account
                                         <div className="flex items-center justify-center">
                                             <input
                                                 type="checkbox"
-                                                className="h-4 w-4 rounded border-zinc-800 bg-zinc-900 text-emerald-600 focus:ring-emerald-600 focus:ring-offset-zinc-950"
+                                                className="appearance-none relative h-4 w-4 rounded-full border border-zinc-700 bg-zinc-900 cursor-pointer transition-all outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 checked:bg-emerald-500 checked:border-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[5px] after:w-[4px] after:h-[8px] after:border-b-2 after:border-r-2 after:border-white after:rotate-45 after:opacity-0 checked:after:opacity-100"
                                                 checked={selectedIds.includes(tx.id)}
                                                 onChange={() => toggleSelection(tx.id)}
                                             />
                                         </div>
                                     </TableCell>
-                                    <TableCell className={`font-medium ${!tx.isPaid ? 'text-zinc-500 italic' : 'text-muted-foreground'}`}>
+                                    <TableCell className={`font - medium ${!tx.isPaid ? 'text-zinc-500 italic' : 'text-muted-foreground'} `}>
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handleToggleStatus(tx.id)}
@@ -272,8 +293,12 @@ export function TransactionList({ transactions, categories, creditCards, account
                                             >
                                                 {!tx.isPaid ? (
                                                     <Clock className="h-4 w-4 text-orange-400" />
-                                                ) : (
+                                                ) : tx.type === 'TRANSFER' ? (
+                                                    <ArrowLeftRight className="h-4 w-4 text-cyan-400" />
+                                                ) : tx.type === 'INCOME' ? (
                                                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                                ) : (
+                                                    <MinusCircle className="h-4 w-4 text-red-500" />
                                                 )}
                                             </button>
                                             {new Date(tx.date).toLocaleDateString("pt-BR")}
@@ -307,11 +332,13 @@ export function TransactionList({ transactions, categories, creditCards, account
                                         <div className="flex flex-col items-end gap-0.5">
                                             <div className="flex items-center gap-1">
                                                 {tx.type === 'INCOME' ? (
-                                                    <ArrowUpRight className={`h-4 w-4 ${tx.isPaid ? 'text-emerald-500' : 'text-emerald-500/40'}`} />
+                                                    <ArrowUpRight className={`h - 4 w - 4 ${tx.isPaid ? 'text-emerald-500' : 'text-emerald-500/40'} `} />
+                                                ) : tx.type === 'TRANSFER' ? (
+                                                    <ArrowLeftRight className={`h - 4 w - 4 ${tx.isPaid ? 'text-cyan-400' : 'text-cyan-400/40'} `} />
                                                 ) : (
-                                                    <ArrowDownRight className={`h-4 w-4 ${tx.isPaid ? 'text-red-500' : 'text-red-500/40'}`} />
+                                                    <ArrowDownRight className={`h - 4 w - 4 ${tx.isPaid ? 'text-red-500' : 'text-red-500/40'} `} />
                                                 )}
-                                                <span className={`font-mono font-bold text-base ${tx.type === 'INCOME' ? (tx.isPaid ? 'text-emerald-400' : 'text-emerald-400/40') : (tx.isPaid ? 'text-zinc-100' : 'text-zinc-500')} ${!tx.isPaid ? 'italic' : ''}`}>
+                                                <span className={`font - mono font - bold text - base ${tx.type === 'INCOME' ? (tx.isPaid ? 'text-emerald-400' : 'text-emerald-400/40') : tx.type === 'TRANSFER' ? (tx.isPaid ? 'text-cyan-400' : 'text-cyan-400/40') : (tx.isPaid ? 'text-zinc-100' : 'text-zinc-500')} ${!tx.isPaid ? 'italic' : ''} `}>
                                                     {tx.type === 'INCOME' ? '+' : ''}
                                                     {Math.abs(Number(tx.amount)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                 </span>

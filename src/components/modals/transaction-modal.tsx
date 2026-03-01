@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard as CardIcon, Calendar, Info, Repeat, CheckCircle2 } from "lucide-react";
+import { Plus, Wallet, CreditCard as CardIcon, Calendar, Info, Repeat, CheckCircle2, Loader2 } from "lucide-react";
 import CurrencyInput from 'react-currency-input-field';
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -269,7 +269,7 @@ export function TransactionModal({
                                                 type="date"
                                                 {...register("date")}
                                                 onChange={(e) => handleDateChange(e.target.value)}
-                                                className="bg-zinc-900 border-zinc-800 h-12 pl-10 text-zinc-100 transition-all focus:border-zinc-600"
+                                                className="bg-zinc-900 border-zinc-800 h-12 pl-10 text-zinc-100 transition-all focus:border-zinc-600 [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                 required
                                             />
                                         </div>
@@ -437,7 +437,7 @@ export function TransactionModal({
                                             type="date"
                                             {...register("reimbursementDate", { required: isReimbursable })}
                                             className={cn(
-                                                "bg-zinc-900 border-zinc-800 h-10 pl-10 text-zinc-100 transition-all focus:border-yellow-500/50",
+                                                "bg-zinc-900 border-zinc-800 h-10 pl-10 text-zinc-100 transition-all focus:border-yellow-500/50 [&::-webkit-calendar-picker-indicator]:opacity-0",
                                                 errors.reimbursementDate && "border-red-500/50 focus:border-red-500"
                                             )}
                                         />
@@ -528,11 +528,18 @@ export function TransactionModal({
                             className={cn(
                                 "flex-1 sm:flex-none h-12 px-10 font-black text-xs tracking-[2px] uppercase transition-all transform active:scale-95 shadow-xl",
                                 type === 'INCOME'
-                                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/10"
-                                    : "bg-zinc-100 hover:bg-white text-zinc-950"
+                                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/10 disabled:bg-emerald-600/50"
+                                    : "bg-zinc-100 hover:bg-white text-zinc-950 disabled:bg-zinc-300"
                             )}
                         >
-                            {loading ? "PROCESSANDO..." : (initialData ? "SALVAR ALTERAÇÕES" : "CONFIRMAR REGISTRO")}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    PROCESSANDO...
+                                </>
+                            ) : (
+                                initialData ? "SALVAR ALTERAÇÕES" : "CONFIRMAR REGISTRO"
+                            )}
                         </Button>
                     </DialogFooter>
                 </form>

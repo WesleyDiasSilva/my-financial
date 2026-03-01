@@ -21,8 +21,15 @@ model User {
   creditCards   CreditCard[]
   transactions  Transaction[]
   goals         Goal[]
+  isAdmin       Boolean       @default(false)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  // Stripe Billing fields
+  stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
+  stripePriceId          String?   @map(name: "stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
 }
 
 model Goal {
@@ -99,6 +106,7 @@ model CreditCard {
   closingDay Int
   dueDay     Int
   color      String?
+  goal       Decimal? @db.Decimal(10, 2)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -151,10 +159,23 @@ enum AccountType {
 enum TransactionType {
   INCOME
   EXPENSE
+  TRANSFER
 }
 
 enum RecurrenceType {
   WEEKLY
   MONTHLY
   YEARLY
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
 }

@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-export async function createCreditCard(data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId: string }) {
+export async function createCreditCard(data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId: string; goal?: number }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
 
@@ -42,6 +42,7 @@ export async function getCreditCards() {
     return cards.map((c: any) => ({
         ...c,
         limit: Number(c.limit),
+        goal: c.goal ? Number(c.goal) : null,
         account: c.account ? {
             ...c.account,
             balance: Number(c.account.balance),
@@ -76,7 +77,7 @@ export async function deleteCreditCard(id: string) {
     revalidatePath("/transactions");
 }
 
-export async function updateCreditCard(id: string, data: { name: string; limit: number; closingDay: number; dueDay: number; color: string; accountId: string }) {
+export async function updateCreditCard(id: string, data: any) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Não autorizado");
 
@@ -93,8 +94,9 @@ export async function updateCreditCard(id: string, data: { name: string; limit: 
             closingDay: data.closingDay,
             dueDay: data.dueDay,
             color: data.color,
-            accountId: data.accountId,
-        },
+            goal: data.goal,
+            account: data.accountId ? { connect: { id: data.accountId } } : undefined,
+        } as any,
     });
 
     revalidatePath("/credit-cards");
@@ -140,6 +142,7 @@ export async function getCreditCardById(id: string) {
     return {
         ...card,
         limit: Number(card.limit),
+        goal: (card as any).goal ? Number((card as any).goal) : null,
         account: card.account ? {
             ...card.account,
             balance: Number(card.account.balance),

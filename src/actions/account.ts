@@ -94,3 +94,119 @@ export async function deleteAccount(id: string) {
 
     revalidatePath("/accounts");
 }
+
+export async function getAccountHealth(accountId: string) {
+    const session = await getSession();
+    if (!session?.user?.id) throw new Error("Não autorizado");
+
+    const account = await prisma.account.findUnique({
+        where: { id: accountId, userId: session.user.id },
+        include: {
+            creditCards: true
+        }
+    });
+
+    if (!account) throw new Error("Conta não encontrada");
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const next30Days = new Date(today);
+    next30Days.setDate(today.getDate() + 30);
+
+    const accountTxs = await prisma.transaction.findMany({
+        where: {
+            accountId: accountId,
+            isPaid: false,
+            date: { lte: next30Days, gte: today }
+        }
+    });
+
+    const ccIds = account.creditCards.map(c => c.id);
+    const ccTxs = ccIds.length > 0 ? await prisma.transaction.findMany({
+        where: {
+            creditCardId: { in: ccIds },
+            isPaid: false
+        }
+    }) : [];
+
+    const ccTxsMapped = ccTxs.map(tx => {
+        const card = account.creditCards.find(c => c.id === tx.creditCardId);
+        let dueDate = new Date(tx.date);
+        dueDate.setDate(card?.dueDay || 10);
+        if (dueDate <= tx.date) {
+            dueDate.setMonth(dueDate.getMonth() + 1);
+        }
+        if (dueDate < today) {
+            dueDate = new Date(today);
+        }
+        return {
+            ...tx,
+            effectiveDate: dueDate
+        };
+    }).filter(tx => tx.effectiveDate <= next30Days);
+
+    const allPending = [
+        ...accountTxs.map(t => ({ amount: Number(t.amount), type: t.type, date: new Date(t.date) })),
+        ...ccTxsMapped.map(t => ({ amount: Number(t.amount), type: 'EXPENSE', date: new Date(t.effectiveDate) }))
+    ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    let currentBalance = Number(account.balance);
+    let score = 100;
+    let runway = 30;
+    let minimumBalance = currentBalance;
+    let totalExpenses = 0;
+
+    for (let day = 0; day <= 30; day++) {
+        const currentDate = new Date(today);
+        currentDate.setDate(today.getDate() + day);
+
+        const dayTxs = allPending.filter(t =>
+            t.date.getDate() === currentDate.getDate() &&
+            t.date.getMonth() === currentDate.getMonth() &&
+            t.date.getFullYear() === currentDate.getFullYear()
+        );
+
+        for (const tx of dayTxs) {
+            if (tx.type === 'INCOME') {
+                currentBalance += tx.amount;
+            } else {
+                currentBalance -= tx.amount;
+                totalExpenses += tx.amount;
+            }
+        }
+
+        if (currentBalance < minimumBalance) {
+            minimumBalance = currentBalance;
+        }
+
+        if (currentBalance < 0 && runway === 30) {
+            runway = day;
+        }
+    }
+
+    const projectedBalance = currentBalance;
+
+    if (allPending.length === 0 && Number(account.balance) === 0) {
+        return { score: 0, status: "Inativa", runway: 0, projectedBalance: 0 };
+    }
+
+    if (projectedBalance < 0) {
+        score = Math.max(0, 29 - Math.min(29, (Math.abs(projectedBalance) / (totalExpenses || 1)) * 30));
+    } else if (minimumBalance < (totalExpenses * 0.2)) {
+        const marginInfo = minimumBalance / (totalExpenses || 1);
+        score = 30 + Math.floor((marginInfo / 0.2) * 49);
+    } else {
+        score = 80 + Math.min(20, Math.floor((minimumBalance / (totalExpenses || 1)) * 10));
+    }
+
+    let status = "Excelente";
+    if (score < 30) status = "Crítico";
+    else if (score < 80) status = "Atenção";
+
+    return {
+        score: Math.floor(score),
+        status,
+        runway: runway > 30 ? "> 30" : runway,
+        projectedBalance
+    };
+}

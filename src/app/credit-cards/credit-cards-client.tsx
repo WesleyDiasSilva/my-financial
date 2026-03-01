@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CreditCard as CreditCardIcon, Calendar } from "lucide-react";
 import { CreditCardModal } from "@/components/modals/credit-card-modal";
 import { CreditCardList } from "@/components/credit-cards/credit-card-list";
+import { CreditCardProjectionsChart } from "@/components/credit-cards/credit-card-projections-chart";
 import { Wallet, TrendingUp, CreditCard, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +159,8 @@ export function CreditCardsClient({
                     </CardContent>
                 </Card>
             </div>
+
+            <CreditCardProjectionsChart cards={cards} />
 
             <CreditCardList initialCards={cards} accounts={accounts} categories={categories} />
         </div>

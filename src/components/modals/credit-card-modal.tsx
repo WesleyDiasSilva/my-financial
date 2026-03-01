@@ -26,11 +26,13 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
             closingDay: initialData.closingDay,
             dueDay: initialData.dueDay,
             color: initialData.color || "#8b5cf6",
+            goal: initialData.goal ? String(Number(initialData.goal).toFixed(2)) : "",
             accountId: initialData.accountId || "",
         } : {
             color: "#8b5cf6",
             accountId: "",
             limit: "",
+            goal: "",
         }
     });
 
@@ -43,8 +45,11 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                 return;
             }
 
-            const rawLimit = String(data.limit || "0");
-            const numericLimit = parseFloat(rawLimit.replace(/\./g, '').replace(',', '.'));
+            const numericLimit = parseFloat(String(data.limit || "0"));
+
+            const numericGoal = data.goal && String(data.goal).trim() !== ""
+                ? parseFloat(String(data.goal))
+                : null;
 
             const payload = {
                 name: data.name,
@@ -52,6 +57,7 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                 closingDay: parseInt(data.closingDay),
                 dueDay: parseInt(data.dueDay),
                 color: data.color || "#8b5cf6",
+                goal: numericGoal || undefined,
                 accountId: data.accountId
             };
 
@@ -93,20 +99,38 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                         <Label htmlFor="name">Nome / Apelido do Cartão</Label>
                         <Input id="name" placeholder="Ex: Nubank Platinum" required className="bg-zinc-900 border-zinc-800" {...register("name")} />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="limit">Limite Total (R$)</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">R$</span>
+                                <CurrencyInput
+                                    id="limit"
+                                    placeholder="0,00"
+                                    decimalsLimit={2}
+                                    decimalSeparator=","
+                                    groupSeparator="."
+                                    className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 pl-9 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-700 placeholder:text-muted-foreground"
+                                    value={watch("limit")}
+                                    onValueChange={(value) => setValue("limit", value || "")}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div className="space-y-2">
-                        <Label htmlFor="limit">Limite Total (R$)</Label>
+                        <Label htmlFor="goal" className="flex items-center gap-1">Meta Máxima (Opcional)</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">R$</span>
                             <CurrencyInput
-                                id="limit"
+                                id="goal"
                                 placeholder="0,00"
                                 decimalsLimit={2}
                                 decimalSeparator=","
                                 groupSeparator="."
                                 className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 pl-9 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-700 placeholder:text-muted-foreground"
-                                value={watch("limit")}
-                                onValueChange={(value) => setValue("limit", value || "")}
-                                required
+                                value={watch("goal")}
+                                onValueChange={(value) => setValue("goal", value || "")}
                             />
                         </div>
                     </div>
@@ -148,6 +172,6 @@ export function CreditCardModal({ accounts, initialData, trigger }: { accounts: 
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
