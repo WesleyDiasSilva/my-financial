@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getTransactions } from "@/actions/transaction";
@@ -148,7 +149,6 @@ export function DashboardClient({
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
                             <Wallet className="h-5 w-5 text-emerald-500" />
                         </div>
-                        <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded font-black uppercase">Seguro</span>
                     </div>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Saldo Líquido Real</p>
                     <h3 className={cn("text-2xl font-black mt-1", realLiquidity >= 0 ? "text-white" : "text-red-500")}>
@@ -161,9 +161,6 @@ export function DashboardClient({
                         <div className="p-2 bg-purple-500/10 rounded-lg">
                             <TrendingUp className="h-5 w-5 text-purple-500" />
                         </div>
-                        <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded font-black uppercase flex items-center gap-1">
-                            <Zap className="w-2 h-2 fill-current" /> AI Glow
-                        </span>
                     </div>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Total Investido</p>
                     <h3 className="text-2xl font-black text-white mt-1">
@@ -188,11 +185,6 @@ export function DashboardClient({
                         <div className="p-2 bg-cyan-500/10 rounded-lg">
                             <DollarSign className="h-5 w-5 text-cyan-400" />
                         </div>
-                        <div className="flex -space-x-1">
-                            <div className="w-5 h-5 rounded-full border border-zinc-900 bg-cyan-500/20 flex items-center justify-center">
-                                <Sparkles className="w-2 h-2 text-cyan-400" />
-                            </div>
-                        </div>
                     </div>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Resultado do Mês</p>
                     <h3 className={cn("text-2xl font-black mt-1", availableBalance >= 0 ? "text-cyan-400" : "text-red-500")}>
@@ -216,7 +208,7 @@ export function DashboardClient({
                             <Activity className="h-5 w-5 text-cyan-400" />
                             Atividades Recentes
                         </h4>
-                        <button className="text-[9px] font-black uppercase text-zinc-500 hover:text-white transition-colors">Ver Todas</button>
+                        <Link href="/transactions" className="text-[9px] font-black uppercase text-zinc-500 hover:text-white transition-colors">Ver Todas</Link>
                     </div>
                     <div className="space-y-6">
                         {monthlyTransactions.slice(0, 5).map((tx: any) => (

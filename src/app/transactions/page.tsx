@@ -10,8 +10,8 @@ import { ArrowDownRight, ArrowUpRight, Wallet, Info } from "lucide-react";
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const params = await searchParams;
-    const initialAccountFilter = typeof params.account === 'string' ? params.account : 'ALL';
-    const initialStatusFilter = typeof params.status === 'string' ? params.status : 'ALL';
+    const initialAccountFilter = typeof params.account === 'string' ? params.account : 'all';
+    const initialStatusFilter = typeof params.status === 'string' ? params.status : 'all';
 
     const transactions = await getTransactions();
     const categories = await getCategories();

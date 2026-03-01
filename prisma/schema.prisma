@@ -100,9 +100,9 @@ model Budget {
 }
 
 model CreditCard {
-  id         String  @id @default(uuid())
+  id         String   @id @default(uuid())
   name       String
-  limit      Decimal @db.Decimal(10, 2)
+  limit      Decimal  @db.Decimal(10, 2)
   closingDay Int
   dueDay     Int
   color      String?
@@ -134,11 +134,15 @@ model Transaction {
   recurrencePeriod Int? // e.g., every 1 month, every 2 weeks
   parentId         String? // Reference to the original transaction
 
+  // AI Ignore
+  ignoreDuplicate Boolean @default(false)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
+  isAiCategorized Boolean   @default(false)
 
   accountId String?
   account   Account? @relation(fields: [accountId], references: [id])

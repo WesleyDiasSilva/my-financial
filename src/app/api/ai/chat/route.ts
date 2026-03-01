@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GeminiProvider } from "@/lib/ai/providers/gemini";
 import type { AIMessage } from "@/lib/ai/contracts/ai-provider";
+import { buildChatPrompt } from "@/lib/ai/prompts/chat";
 
 export async function POST(req: NextRequest) {
     try {
@@ -67,56 +68,23 @@ export async function POST(req: NextRequest) {
         const recurring = transactions.filter(t => t.isRecurring);
         const pendingFuture = transactions.filter(t => !t.isPaid && new Date(t.date) >= today);
 
-        const systemPrompt = `Você é o assistente financeiro pessoal IA do MyLife. Seu nome é MyLife AI.
-
-## Sua Personalidade
-- Empático, super direto e prático
-- SEJA EXTREMAMENTE CONCISO. Evite introduções longas ou parágrafos imensos. Vá direto ao ponto.
-- Responda de forma scaneável: Use listas com marcadores (* ou -) sempre que listar categorias ou dados.
-- Use **negrito** apenas para destacar os valores (ex: **R$ 1.000,00**) ou palavras chaves muito importantes.
-- Use emojis com moderação para tornar a conversa agradável.
-- Sempre baseie suas respostas nos dados reais do usuário e fale em português brasileiro.
-
-## Contexto Financeiro do Usuário (${user?.name || "Usuário"})
-- Data atual: ${today.toLocaleDateString("pt-BR")}
-- Renda mensal declarada: ${user?.monthlyIncome ? `R$ ${Number(user.monthlyIncome).toFixed(2)}` : "Não informada"}
-- Saldo em contas: R$ ${totalBalance.toFixed(2)}
-- Total investido: R$ ${totalInvestments.toFixed(2)}
-- Receita este mês: R$ ${income.toFixed(2)}
-- Despesa este mês: R$ ${expense.toFixed(2)}
-- Resultado: R$ ${(income - expense).toFixed(2)}
-- Dívida em cartões: R$ ${totalCreditDebt.toFixed(2)}
-
-## Gastos por Categoria (mês atual)
-${Object.entries(categorySpending).map(([k, v]) => `- ${k}: R$ ${v.toFixed(2)}`).join("\n") || "Sem gastos registrados"}
-
-## Limites por Categoria
-${categories.filter(c => c.monthlyLimit).map(c => `- ${c.name}: limite R$ ${Number(c.monthlyLimit).toFixed(2)}`).join("\n") || "Sem limites definidos"}
-
-## Metas
-${goals.map(g => `- ${g.name}: R$ ${Number(g.currentAmount).toFixed(2)} de R$ ${Number(g.targetAmount).toFixed(2)}`).join("\n") || "Sem metas"}
-
-## Cartões de Crédito
-${creditCards.map(c => `- ${c.name}: limite R$ ${Number(c.limit).toFixed(2)}`).join("\n")}
-
-## Contas Previstas (Agendadas/Futuras)
-${pendingFuture.length > 0 ? pendingFuture.map(t => `- ${t.description}: ${t.type === "INCOME" ? "+" : "-"}R$ ${Math.abs(Number(t.amount)).toFixed(2)} (Vence: ${new Date(t.date).toLocaleDateString("pt-BR")})`).join("\n") : "Nenhuma conta prevista."}
-
-## Assinaturas / Contas Recorrentes
-${recurring.length > 0 ? recurring.map(t => `- ${t.description}: R$ ${Math.abs(Number(t.amount)).toFixed(2)} (A cada ${t.recurrencePeriod} ${t.recurrenceType})`).join("\n") : "Nenhuma recorrência ativa."}
-
-## Últimas 30 Transações (Histórico Recente)
-${transactions.slice(0, 30).map(t => `- ${t.description}: ${t.type === "INCOME" ? "+" : "-"}R$ ${Math.abs(Number(t.amount)).toFixed(2)} (${t.category?.name || "Sem cat"}, ${new Date(t.date).toLocaleDateString("pt-BR")}) - ${t.isPaid ? 'Efetuada' : 'Pendente'}`).join("\n")}
-
-## Suas Capacidades
-- Analisar situação financeira atual
-- Ajudar a decidir se deve fazer uma compra
-- Sugerir estratégias de economia
-- Orientar sobre investimentos
-- Ajudar com planejamento financeiro
-- Alertar sobre riscos
-
-IMPORTANTE: Sempre baseie suas respostas nos dados reais acima. Nunca invente dados. Se não tiver informação suficiente, peça ao usuário.`;
+        const systemPrompt = buildChatPrompt({
+            user,
+            today,
+            totalBalance,
+            totalInvestments,
+            income,
+            expense,
+            totalCreditDebt,
+            categorySpending,
+            categories,
+            goals,
+            creditCards,
+            pendingFuture,
+            recurring,
+            transactions,
+            accounts,
+        });
 
         // Gemini requires the first message in history to be from 'user'
         let filteredMessages: any[] = messages;

@@ -69,7 +69,7 @@ export function TransactionModal({
         }
     });
     useEffect(() => {
-        register("categoryId", { required: true });
+        register("categoryId", { required: false });
     }, [register]);
 
     const [loading, setLoading] = useState(false);
@@ -350,19 +350,20 @@ export function TransactionModal({
                             )}
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] uppercase text-zinc-500 font-bold tracking-tighter">Categoria</Label>
-                                <Select value={watch("categoryId")} onValueChange={(val) => setValue("categoryId", val)} required>
+                                <Select value={watch("categoryId") || ""} onValueChange={(val) => setValue("categoryId", val === "NONE" ? "" : val)}>
                                     <SelectTrigger className={cn(
                                         "bg-zinc-900 border-zinc-800 h-10 rounded-lg",
                                         errors.categoryId && "border-red-500/50 focus:border-red-500"
                                     )}>
-                                        <SelectValue placeholder="Escolha..." />
+                                        <SelectValue placeholder="Sem categoria / Opcional" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                        <SelectItem value="NONE" className="text-zinc-500 italic">Deixar em branco (Mágica IA)</SelectItem>
                                         {filteredCategories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                                 {errors.categoryId && (
-                                    <span className="text-[10px] text-red-500 font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-1">
+                                    <span className="text-[10px] text-red-500 font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-1 mt-1">
                                         Categoria é obrigatória
                                     </span>
                                 )}
