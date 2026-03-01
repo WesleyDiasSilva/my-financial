@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { cookies } from "next/headers";
+import { DEMO_USER_EMAIL } from "./auth-util";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -55,9 +57,29 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (token && session.user) {
-                session.user.id = token.id as string;
+                let currentId = token.id as string;
+                const isAdmin = token.isAdmin as boolean;
+
+                if (isAdmin) {
+                    try {
+                        const cookieStore = await cookies();
+                        if (cookieStore.get("admin_demo_mode")?.value === "true") {
+                            const demoUser = await prisma.user.findUnique({
+                                where: { email: DEMO_USER_EMAIL },
+                                select: { id: true }
+                            });
+                            if (demoUser) {
+                                currentId = demoUser.id;
+                            }
+                        }
+                    } catch (e) {
+                        // Pass silently if cookies() is called outside HTTP request
+                    }
+                }
+
+                session.user.id = currentId;
                 (session.user as any).cpf = token.cpf as string;
-                (session.user as any).isAdmin = token.isAdmin as boolean;
+                (session.user as any).isAdmin = isAdmin;
             }
             return session;
         },

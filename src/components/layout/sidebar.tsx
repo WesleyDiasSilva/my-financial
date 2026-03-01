@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CreditCard, LayoutDashboard, Receipt, Target, LogOut, Wallet, FileText, Crown, Infinity, Users, ShieldCheck } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { toggleAdminDemoMode } from '@/actions/toggle-demo';
 
 export function Sidebar() {
     const { data: session } = useSession();
@@ -25,17 +26,23 @@ export function Sidebar() {
 
     const adminNavItems = [
         { href: "/dashboard?admin=true", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/admin/users?admin=true", label: "Usuários", icon: Users },
+        ...userNavItems.filter(item => item.href !== "/dashboard").map(item => ({
+            ...item,
+            href: `${item.href}?admin=true` // Repassa o estado de admin pra view
+        })),
+        { href: "/admin/users?admin=true", label: "Gestão", icon: Users },
     ];
 
     const navItems = adminMode ? adminNavItems : userNavItems;
 
-    const toggleAdminMode = (toAdmin: boolean) => {
+    const toggleAdminMode = async (toAdmin: boolean) => {
+        await toggleAdminDemoMode(toAdmin);
         if (toAdmin) {
             router.push("/dashboard?admin=true");
         } else {
             router.push("/dashboard");
         }
+        router.refresh(); // Força o re-flush de cache e refetch do dashboard
     };
 
     return (
