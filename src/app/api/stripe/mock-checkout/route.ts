@@ -11,7 +11,7 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { planId } = await req.json();
+        const { planId, billing } = await req.json();
 
         if (!planId) {
             return new NextResponse("Plan ID is missing", { status: 400 });
@@ -33,7 +33,12 @@ export async function POST(req: Request) {
         const mockSubscriptionId = `sub_mock_${Math.random().toString(36).substring(7)}`;
 
         const currentDate = new Date();
-        const nextMonthDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+        const endDate = new Date(currentDate);
+        if (billing === "yearly") {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+        } else {
+            endDate.setMonth(endDate.getMonth() + 1);
+        }
 
         // Update user
         await db.user.update({
@@ -41,8 +46,8 @@ export async function POST(req: Request) {
             data: {
                 stripeCustomerId: mockCustomerId,
                 stripeSubscriptionId: mockSubscriptionId,
-                stripePriceId: plan.stripePriceId,
-                stripeCurrentPeriodEnd: nextMonthDate,
+                stripePriceId: billing === "yearly" && plan.stripePriceIdYearly ? plan.stripePriceIdYearly : plan.stripePriceId,
+                stripeCurrentPeriodEnd: endDate,
             },
         });
 

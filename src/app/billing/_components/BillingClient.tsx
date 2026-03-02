@@ -49,7 +49,7 @@ export default function BillingClient({ subscription }: Props) {
                 </button>
             </div>
 
-            <div className="flex-1 w-full max-w-5xl">
+            <div className="flex-1 w-full mx-auto">
                 {activeTab === "subscription" ? (
                     <SubscriptionOverview subscription={subscription} />
                 ) : (
@@ -63,7 +63,10 @@ export default function BillingClient({ subscription }: Props) {
 function SubscriptionOverview({ subscription }: Props) {
     const [isLoading, setIsLoading] = useState(false);
 
-    const activePlan = storeSubscriptionPlans.find(p => p.stripePriceId === subscription.planId);
+    const activePlan = storeSubscriptionPlans.find(p =>
+        p.stripePriceId === subscription.planId ||
+        p.stripePriceIdYearly === subscription.planId
+    );
 
     const onManageSubscription = async () => {
         try {
@@ -170,20 +173,37 @@ function SubscriptionOverview({ subscription }: Props) {
 
 function PlansAndHistory({ subscription }: Props) {
     const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+    const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
     const router = useRouter();
 
     const onSubscribe = async (planId: string) => {
         setLoadingPriceId(planId);
-        router.push(`/checkout/${planId}`);
+        router.push(`/checkout/${planId}?billing=${billing}`);
     };
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <section>
-                <h2 className="text-xl font-bold text-white mb-6">Mudar de Plano</h2>
+                <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+                    <h2 className="text-xl font-bold text-white">Mudar de Plano</h2>
+                    <div className="flex h-12 w-80 items-center justify-center rounded-full bg-cyan-500/10 p-1 border border-cyan-500/20">
+                        <button
+                            onClick={() => setBilling("monthly")}
+                            className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-full px-4 transition-all text-sm font-bold ${billing === "monthly" ? "bg-cyan-500 text-[#050a10] shadow-sm" : "text-zinc-400"}`}
+                        >
+                            Mensal
+                        </button>
+                        <button
+                            onClick={() => setBilling("yearly")}
+                            className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-full px-4 transition-all text-sm font-bold ${billing === "yearly" ? "bg-cyan-500 text-[#050a10] shadow-sm" : "text-zinc-400"}`}
+                        >
+                            Anual <span className="text-[10px] ml-1 opacity-80">(-20%)</span>
+                        </button>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {storeSubscriptionPlans.map((plan) => {
-                        const isCurrent = (subscription.isPro && subscription.planId === plan.stripePriceId) || (!subscription.isPro && plan.id === "essential");
+                        const isCurrent = (subscription.isPro && subscription.planId === plan.stripePriceId) || (subscription.isPro && subscription.planId === plan.stripePriceIdYearly) || (!subscription.isPro && plan.id === "essential");
                         return (
                             <div
                                 key={plan.id}
@@ -193,15 +213,20 @@ function PlansAndHistory({ subscription }: Props) {
                                     }`}
                             >
                                 {isCurrent && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-cyan-500 text-[#050a10] text-[10px] font-bold uppercase tracking-widest rounded-full">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-cyan-500 text-[#050a10] text-[10px] font-bold uppercase tracking-widest rounded-full z-10">
                                         Seu Plano Atual
                                     </div>
                                 )}
-                                <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
                                 <div className="mb-6">
-                                    <span className="text-3xl font-black text-white">{plan.priceMonthly}</span>
+                                    <h3 className="text-lg font-bold text-white mb-2 italic">{plan.name}</h3>
+                                    <p className="text-zinc-500 text-xs min-h-[32px]">{plan.description}</p>
+                                </div>
+                                <div className="mb-6">
+                                    <span className="text-3xl font-black text-white">
+                                        {billing === "monthly" ? plan.priceMonthly : plan.priceYearly}
+                                    </span>
                                     {plan.priceMonthly !== "Gratuito" && (
-                                        <span className="text-zinc-500 text-sm">/mês</span>
+                                        <span className="text-zinc-500 text-sm"> / {billing === "monthly" ? "mês" : "ano"}</span>
                                     )}
                                 </div>
                                 <ul className="space-y-3 mb-8 flex-1">
@@ -216,17 +241,17 @@ function PlansAndHistory({ subscription }: Props) {
                                         </li>
                                     ))}
                                 </ul>
-                                {!isCurrent && (
+                                {!isCurrent && (plan.id !== "essential" || !subscription.isPro) && (
                                     <button
                                         disabled={loadingPriceId === plan.id}
                                         onClick={() => onSubscribe(plan.id)}
-                                        className={`w-full mt-auto py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${plan.buttonStyle || "bg-white text-[#050a10] hover:bg-zinc-200"
+                                        className={`w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${plan.buttonStyle || "bg-white text-[#050a10] hover:bg-zinc-200"
                                             } flex items-center justify-center`}
                                     >
                                         {loadingPriceId === plan.id ? (
                                             <Loader2 className="h-4 w-4 animate-spin text-current" />
                                         ) : (
-                                            plan.buttonLabel || "Assinar " + plan.name
+                                            subscription.isPro ? "Mudar de plano" : (plan.buttonLabel || "Assinar " + plan.name)
                                         )}
                                     </button>
                                 )}

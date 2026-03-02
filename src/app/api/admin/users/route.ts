@@ -26,9 +26,12 @@ export async function GET() {
 
         // Map plan names
         const planNames: Record<string, string> = {
-            "price_free": "Free",
-            "price_1RGJFqP8GrvSfETjYS461xDI": "Basic",
-            "price_1RGJGaP8GrvSfETjnI3tFhpB": "Premium",
+            [process.env.NEXT_PUBLIC_STRIPE_PRO_MENSAL_ID!]: "Pro",
+            [process.env.NEXT_PUBLIC_STRIPE_PRO_ANUAL_ID!]: "Pro",
+            [process.env.NEXT_PUBLIC_STRIPE_PRIME_MENSAL_ID!]: "Prime",
+            [process.env.NEXT_PUBLIC_STRIPE_PRIME_ANUAL_ID!]: "Prime",
+            [process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_MENSAL_ID!]: "Ultimate",
+            [process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_ANUAL_ID!]: "Ultimate",
         };
 
         const mappedUsers = users.map(user => ({

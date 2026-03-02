@@ -1,13 +1,12 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
-import { prisma as db } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
     const body = await req.text();
-    const headersList = await headers();
-    const signature = headersList.get("Stripe-Signature") as string;
+    const signature = (await headers()).get("Stripe-Signature") as string;
 
     let event: Stripe.Event;
 
@@ -15,28 +14,27 @@ export async function POST(req: Request) {
         event = stripe.webhooks.constructEvent(
             body,
             signature,
-            process.env.STRIPE_WEBHOOK_SECRET || ""
+            process.env.STRIPE_WEBHOOK_SECRET!
         );
     } catch (error: any) {
         return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
     }
 
-    const session = event.data.object as Stripe.Checkout.Session;
+    console.log(`[STRIPE_WEBHOOK] Event received: ${event.type}`);
 
     if (event.type === "checkout.session.completed") {
-        // Pegar a subscription
+        const session = event.data.object as Stripe.Checkout.Session;
+
         const subscription = (await stripe.subscriptions.retrieve(
             session.subscription as string
-        )) as Stripe.Subscription;
+        )) as any;
 
         if (!session?.metadata?.userId) {
-            return new NextResponse("User ID is required in metadata", {
-                status: 400,
-            });
+            console.error("[STRIPE_WEBHOOK] Missing userId in session metadata");
+            return new NextResponse("User id is required", { status: 400 });
         }
 
-        // Atualizar o banco de dados do user vinculado à assinatura
-        await db.user.update({
+        await prisma.user.update({
             where: {
                 id: session.metadata.userId,
             },
@@ -45,29 +43,34 @@ export async function POST(req: Request) {
                 stripeCustomerId: subscription.customer as string,
                 stripePriceId: subscription.items.data[0].price.id,
                 stripeCurrentPeriodEnd: new Date(
-                    (subscription as any).current_period_end * 1000
+                    subscription.current_period_end * 1000
                 ),
             },
         });
+        console.log(`[STRIPE_WEBHOOK] 🟢 Subscription created for user: ${session.metadata.userId}`);
     }
 
     if (event.type === "invoice.payment_succeeded") {
-        // Quando uma inscrição é renovada com sucesso
-        const subscription = (await stripe.subscriptions.retrieve(
-            session.subscription as string
-        )) as Stripe.Subscription;
+        const invoice = event.data.object as any;
 
-        await db.user.update({
-            where: {
-                stripeSubscriptionId: subscription.id,
-            },
-            data: {
-                stripePriceId: subscription.items.data[0].price.id,
-                stripeCurrentPeriodEnd: new Date(
-                    (subscription as any).current_period_end * 1000
-                ),
-            },
-        });
+        if (invoice.subscription) {
+            const subscription = (await stripe.subscriptions.retrieve(
+                invoice.subscription as string
+            )) as any;
+
+            await prisma.user.update({
+                where: {
+                    stripeSubscriptionId: subscription.id,
+                },
+                data: {
+                    stripePriceId: subscription.items.data[0].price.id,
+                    stripeCurrentPeriodEnd: new Date(
+                        subscription.current_period_end * 1000
+                    ),
+                },
+            });
+            console.log(`[STRIPE_WEBHOOK] 🟢 Subscription updated for subscription: ${subscription.id}`);
+        }
     }
 
     return new NextResponse(null, { status: 200 });

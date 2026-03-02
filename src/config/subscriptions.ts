@@ -3,6 +3,7 @@ export type SubscriptionPlan = {
     name: string;
     description: string;
     stripePriceId: string;
+    stripePriceIdYearly?: string;
     priceMonthly: string;
     priceYearly: string;
     suffix?: string;
@@ -18,6 +19,7 @@ export const storeSubscriptionPlans: SubscriptionPlan[] = [
         name: "Essential",
         description: "O básico essencial para começar.",
         stripePriceId: process.env.NEXT_PUBLIC_STRIPE_ESSENTIAL_PRICE_ID || "mock_price_essential",
+        stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_ESSENTIAL_PRICE_ID_YEARLY || "mock_price_essential_yearly",
         priceMonthly: "Gratuito",
         priceYearly: "Gratuito",
         isPopular: false,
@@ -34,7 +36,8 @@ export const storeSubscriptionPlans: SubscriptionPlan[] = [
         id: "pro",
         name: "Pro",
         description: "Ferramentas avançadas para o seu dia.",
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || "mock_price_pro",
+        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_MENSAL_ID || "mock_price_pro",
+        stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_PRO_ANUAL_ID || "mock_price_pro_yearly",
         priceMonthly: "R$ 39,99",
         priceYearly: "R$ 31,99",
         suffix: "/mês",
@@ -49,10 +52,11 @@ export const storeSubscriptionPlans: SubscriptionPlan[] = [
         ],
     },
     {
-        id: "family",
-        name: "Family",
+        id: "prime",
+        name: "Prime",
         description: "Conecte sua família em um só lugar.",
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_FAMILY_PRICE_ID || "mock_price_family",
+        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRIME_MENSAL_ID || "mock_price_prime",
+        stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_PRIME_ANUAL_ID || "mock_price_prime_yearly",
         priceMonthly: "R$ 69,99",
         priceYearly: "R$ 55,99",
         suffix: "/mês",
@@ -67,10 +71,11 @@ export const storeSubscriptionPlans: SubscriptionPlan[] = [
         ],
     },
     {
-        id: "elite",
-        name: "Elite",
+        id: "ultimate",
+        name: "Ultimate",
         description: "O máximo de MyLife para você.",
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_ELITE_PRICE_ID || "mock_price_elite",
+        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_MENSAL_ID || "mock_price_ultimate",
+        stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_ANUAL_ID || "mock_price_ultimate_yearly",
         priceMonthly: "R$ 89,99",
         priceYearly: "R$ 71,99",
         suffix: "/mês",

@@ -1,59 +1,160 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth"; // Assume authOptions export exists
+import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
-import { prisma as db } from "@/lib/prisma";
-import { storeSubscriptionPlans } from "@/config/subscriptions";
+import { prisma } from "@/lib/prisma";
+
+const settingsUrl = process.env.NEXTAUTH_URL + "/billing";
 
 export async function POST(req: Request) {
     try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return new NextResponse("STRIPE_SECRET_KEY is missing in .env", { status: 500 });
+        }
+
         const session = await getServerSession(authOptions);
-        if (!session?.user) {
+
+        if (!session?.user?.id || !session.user.email) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         const { priceId } = await req.json();
 
         if (!priceId) {
-            return new NextResponse("Price ID is missing", { status: 400 });
+            return new NextResponse("Price ID is required", { status: 400 });
         }
 
-        // Achar o usuário para ver se já tem customer no stripe
-        const user = await db.user.findUnique({
-            where: { email: session.user.email! },
-            select: { id: true, stripeCustomerId: true, email: true },
+        const user = await prisma.user.findUnique({
+            where: {
+                id: session.user.id,
+            },
         });
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });
         }
 
-        // Criar a URL completa baseada no host atual
-        const url = new URL(req.url);
-        const billingUrl = `${url.origin}/billing`;
+        let stripeCustomerId = user.stripeCustomerId;
 
-        const stripeSession = await stripe.checkout.sessions.create({
-            success_url: billingUrl,
-            cancel_url: billingUrl,
-            payment_method_types: ["card"],
-            mode: "subscription",
-            billing_address_collection: "auto",
-            customer_email: user.stripeCustomerId ? undefined : user.email!,
-            customer: user.stripeCustomerId ? user.stripeCustomerId : undefined,
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create({
+                email: session.user.email,
+                name: session.user.name || undefined,
+                metadata: {
+                    userId: session.user.id,
                 },
-            ],
-            metadata: {
-                userId: user.id,
-            },
+            });
+
+            stripeCustomerId = customer.id;
+
+            await prisma.user.update({
+                where: {
+                    id: session.user.id,
+                },
+                data: {
+                    stripeCustomerId,
+                },
+            });
+        }
+
+        // --- PREVENIR DUPLICIDADE ---
+        // Verificar se já existe uma assinatura ativa para este cliente
+        const activeSubscriptions = await stripe.subscriptions.list({
+            customer: stripeCustomerId,
+            status: "active",
+            limit: 1,
         });
 
+        if (activeSubscriptions.data.length > 0) {
+            const currentSubscription = activeSubscriptions.data[0];
+
+            // Se já tem assinatura ativa, redireciona para o Billing Portal 
+            // Já configurado para mudar para o novo plano
+            const portalSession = await stripe.billingPortal.sessions.create({
+                customer: stripeCustomerId,
+                return_url: settingsUrl,
+                flow_data: {
+                    type: "subscription_update_confirm",
+                    subscription_update_confirm: {
+                        subscription: currentSubscription.id,
+                        items: [
+                            {
+                                id: currentSubscription.items.data[0].id,
+                                price: priceId,
+                                quantity: 1,
+                            },
+                        ],
+                    },
+                },
+            });
+
+            return NextResponse.json({ url: portalSession.url });
+        }
+        // ----------------------------
+
+        let stripeSession;
+
+        try {
+            stripeSession = await stripe.checkout.sessions.create({
+                customer: stripeCustomerId,
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
+                mode: "subscription",
+                success_url: settingsUrl + "?success=true",
+                cancel_url: settingsUrl + "?canceled=true",
+                metadata: {
+                    userId: session.user.id,
+                },
+            });
+        } catch (error: any) {
+            // If the customer does not exist in Stripe, recreate it
+            if (error.code === "resource_missing" && error.param === "customer") {
+                const customer = await stripe.customers.create({
+                    email: session.user.email,
+                    name: session.user.name || undefined,
+                    metadata: {
+                        userId: session.user.id,
+                    },
+                });
+
+                stripeCustomerId = customer.id;
+
+                await prisma.user.update({
+                    where: {
+                        id: session.user.id,
+                    },
+                    data: {
+                        stripeCustomerId,
+                    },
+                });
+
+                stripeSession = await stripe.checkout.sessions.create({
+                    customer: stripeCustomerId,
+                    line_items: [
+                        {
+                            price: priceId,
+                            quantity: 1,
+                        },
+                    ],
+                    mode: "subscription",
+                    success_url: settingsUrl + "?success=true",
+                    cancel_url: settingsUrl + "?canceled=true",
+                    metadata: {
+                        userId: session.user.id,
+                    },
+                });
+            } else {
+                throw error;
+            }
+        }
+
         return NextResponse.json({ url: stripeSession.url });
-    } catch (error) {
+    } catch (error: any) {
         console.error("[STRIPE_CHECKOUT]", error);
-        return new NextResponse("Internal server error", { status: 500 });
+        return new NextResponse(error.message || "Internal Error", { status: 500 });
     }
 }

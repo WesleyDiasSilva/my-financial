@@ -34,14 +34,14 @@ export async function GET() {
             },
         });
 
-        // Plan prices mapping (adjust these to match your actual Stripe prices)
+        // Plan prices mapping
         const planPrices: Record<string, number> = {
-            // Free
-            "price_free": 0,
-            // Basic
-            "price_1RGJFqP8GrvSfETjYS461xDI": 19.90,
-            // Premium  
-            "price_1RGJGaP8GrvSfETjnI3tFhpB": 39.90,
+            [process.env.NEXT_PUBLIC_STRIPE_PRO_MENSAL_ID!]: 39.99,
+            [process.env.NEXT_PUBLIC_STRIPE_PRO_ANUAL_ID!]: 31.99,
+            [process.env.NEXT_PUBLIC_STRIPE_PRIME_MENSAL_ID!]: 69.99,
+            [process.env.NEXT_PUBLIC_STRIPE_PRIME_ANUAL_ID!]: 55.99,
+            [process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_MENSAL_ID!]: 89.99,
+            [process.env.NEXT_PUBLIC_STRIPE_ULTIMATE_ANUAL_ID!]: 71.99,
         };
 
         // MRR = sum of active subscription values

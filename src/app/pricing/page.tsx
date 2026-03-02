@@ -93,30 +93,32 @@ export default function PricingPage() {
                     {storeSubscriptionPlans.map((plan) => (
                         <div
                             key={plan.name}
-                            className={`relative h-full flex flex-col gap-8 rounded-2xl p-8 hover:translate-y-[-4px] transition-transform duration-300 backdrop-blur-xl ${plan.isPopular
+                            className={`relative h-full flex flex-col rounded-2xl p-8 hover:translate-y-[-4px] transition-transform duration-300 backdrop-blur-xl ${plan.isPopular
                                 ? "border-2 border-cyan-500 shadow-[0_0_30px_rgba(13,185,242,0.2)]"
                                 : "border border-cyan-500/10"
                                 }`}
                             style={{ background: "rgba(24, 45, 52, 0.6)" }}
                         >
                             {plan.isPopular && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-cyan-500 text-[#101e22] text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-cyan-500 text-[#101e22] text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full z-10">
                                     Mais Popular
                                 </div>
                             )}
-                            <div className="flex flex-col gap-2">
-                                <h3 className="text-white text-xl font-bold">{plan.name}</h3>
-                                <p className="text-zinc-400 text-sm">{plan.description}</p>
-                                <div className="mt-4 flex items-baseline gap-1">
-                                    <span className="text-white text-4xl font-black">
-                                        {billing === "monthly" ? plan.priceMonthly : plan.priceYearly}
-                                    </span>
-                                    {plan.suffix && (
-                                        <span className="text-zinc-400 text-sm font-bold">{plan.suffix}</span>
-                                    )}
-                                </div>
+                            <div className="flex flex-col gap-2 mb-6">
+                                <h3 className="text-white text-xl font-bold italic">{plan.name}</h3>
+                                <p className="text-zinc-400 text-sm min-h-[40px]">{plan.description}</p>
                             </div>
-                            <div className="space-y-4 flex-1 mb-8">
+
+                            <div className="mb-8 flex items-baseline gap-1">
+                                <span className="text-white text-4xl font-black">
+                                    {billing === "monthly" ? plan.priceMonthly : plan.priceYearly}
+                                </span>
+                                {plan.suffix && (
+                                    <span className="text-zinc-400 text-sm font-bold">{plan.suffix}</span>
+                                )}
+                            </div>
+
+                            <div className="space-y-4 mb-8 flex-1">
                                 {plan.features.map((feature, idx) => (
                                     <div key={idx} className="flex items-start gap-3">
                                         {feature.included ? (
@@ -132,7 +134,7 @@ export default function PricingPage() {
                             </div>
                             <Link
                                 href="/register"
-                                className={`w-full mt-auto py-3 rounded-xl text-sm font-bold transition-all text-center block ${plan.buttonStyle || "bg-white text-[#050a10] hover:bg-zinc-200"}`}
+                                className={`w-full py-3 rounded-xl text-sm font-bold transition-all text-center block ${plan.buttonStyle || "bg-white text-[#050a10] hover:bg-zinc-200"}`}
                             >
                                 {plan.buttonLabel || "Assinar " + plan.name}
                             </Link>
